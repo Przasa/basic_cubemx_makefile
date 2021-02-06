@@ -13,7 +13,7 @@
 ######################################
 # target
 ######################################
-TARGET = basic_cubemx_makefile
+TARGET = basic_cubemx_makefile_baremetal
 
 
 ######################################
@@ -53,11 +53,11 @@ Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_pwr.c \
 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_flash.c \
 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_flash_ex.c \
 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_exti.c \
-Src/system_stm32f1xx.c
+Src/system_stm32f1xx.c \
+startup_stm32f103xb.c
 
 # ASM sources
 ASM_SOURCES =  \
-startup_stm32f103xb.s
 
 
 #######################################

@@ -42,6 +42,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
+uint32_t i=1; //demonstracja zwiekszenia "data" i "bss" po kompilacji
 
 /* USER CODE BEGIN PV */
 
@@ -95,7 +96,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
+  while (i)
   {
     /* USER CODE END WHILE */
     HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_SET);

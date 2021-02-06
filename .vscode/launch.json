@@ -7,7 +7,7 @@
         {
             "name": "Cortex Debug",
             "cwd": "${workspaceRoot}",
-            "executable": "./build/basic_cubemx_makefile.elf",
+            "executable": "./build/basic_cubemx_makefile_baremetal.elf",
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
