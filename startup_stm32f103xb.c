@@ -6,44 +6,45 @@
 #define __weak   __attribute__((weak))
 #endif /* __weak */
 
-/* start address for the initialization values of the .data section.
-defined in linker script */
-extern uint32_t _sidata;
-/* start address for the .data section. defined in linker script */
-extern uint32_t _sdata;
-/* end address for the .data section. defined in linker script */
-extern uint32_t _edata;
-/* start address for the .bss section. defined in linker script */
-extern uint32_t _sbss;
-/* end address for the .bss section. defined in linker script */
-extern uint32_t _ebss;
+// Constants from linker
+extern uint32_t _sidata;    // Start of init data
+extern uint32_t _sdata;     // Start of data
+extern uint32_t _edata;     // End of data
+extern uint32_t _sbss;      // Start of bss
+extern uint32_t _ebss;      // End of bss
+extern uint32_t _estack;    // Top of stack
 
-extern uint32_t _estack;
-
+// Static constructor initializator from libc
 extern void __libc_init_array();
+// Main program endtry point
 extern int main();
-
+// Reset Handler
 void Reset_Handler_C(){
 
+    // Initialize data segment
     uint32_t *dataInit = &_sidata;
     uint32_t *data = &_sdata;
     while (data < &_edata){
         *data++=*dataInit++;
     }
 
+    // Initialize bss segment
     uint32_t *bss = &_sbss;
     while (bss < &_ebss)
     {
         *bss++=0;
     }
-
+    // Run  ST system init
     SystemInit();
+    // Initilize static constructors
     __libc_init_array();
+    // Enter main program
     main();
-
+    // Handle the case where main function returns
     while(1);
 }
 
+// Default handler for unimplemented interrupts
 void Default_Handler(void){
     while(1);
 }
@@ -53,6 +54,7 @@ void Default_Handler(void){
 //     while(1);
 // }
 
+// Weak definitions of interupt handlers
 __weak void NMI_Handler (void) {Default_Handler();}
 __weak void HardFault_Handler (void) {Default_Handler();}
 __weak void MemManage_Handler (void) {Default_Handler();}
