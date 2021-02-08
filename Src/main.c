@@ -31,9 +31,9 @@
 
 //stabilne miganie dioda. nadaje sie jako baza
 
-void  __attribute__((optimize("O0"))) delay(void)
+void  __attribute__((optimize("O0"))) delay(uint32_t value)
 {
-	for(uint32_t i = 0 ; i < 500000 ; i ++);
+	for(uint32_t i = 0 ; i < value ; i ++);
 }
 
 
@@ -50,9 +50,9 @@ int main(void)
 
 	for(;;){
 		GPIOA->ODR |= (1<<5);
-		delay();
+		delay(500000);
 		GPIOA->ODR &=~(1<<5);
-		delay();
+		delay(50000);
 	}
 
 	return 0;
