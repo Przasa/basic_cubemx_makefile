@@ -41,19 +41,22 @@ void  __attribute__((optimize("O0"))) delay(uint32_t value)
 int main(void)
 {
 
-	GPIOA_PCLK_EN();
+	configure_gpio(GPIOA,5,OUTPUT_GPIO_PUPD_10MHZ);
+	configure_gpio(GPIOC,13,INPUT_PUPD);
 
-	GPIOA->CRL |= (1<< 20);
-	GPIOA->CRL &= ~(1<< 21);
-	GPIOA->CRL &= ~(1<< 22);
-	GPIOA->CRL &= ~(1<< 23);
+	// GPIOA_PCLK_EN();
+
+	// GPIOA->CRL |= (1<< 20);
+	// GPIOA->CRL &= ~(1<< 21);
+	// GPIOA->CRL &= ~(1<< 22);
+	// GPIOA->CRL &= ~(1<< 23);
 
 
 	for(;;){
 		GPIOA->ODR |= (1<<5);
 		delay(500000);
 		GPIOA->ODR &=~(1<<5);
-		delay(50000);
+		delay(500000);
 	}
 
 	return 0;

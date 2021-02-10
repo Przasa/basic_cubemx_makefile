@@ -1,3 +1,6 @@
+#ifndef GPIOHANDLER_H
+#define GPIOHANDLER_H
+
 #include "my_stm32f103xx.h"
 
 typedef enum {
@@ -10,6 +13,9 @@ typedef enum {
 
 void configure_gpio( GPIO_RegDef_t *PORT, int PIN_NR, GPIO_CONFIGURATION gpio_conf);
 void set_gpio_output(GPIO_RegDef_t *port, int PIN_NR, int value);
-int read_gpio_input(GPIO_RegDef_t *port, int PIN_NR);
+int  read_gpio_input(GPIO_RegDef_t *port, int PIN_NR);
+
+#endif  // GPIOHANDLER_H
+
 
 

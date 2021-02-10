@@ -1,7 +1,5 @@
 #include "gpio_handler.h"
-// #include "my_stm32f103xx.h"
-
-enum GPIO_TYPES{INPUT,OUTPUT};
+#include "my_stm32f103xx.h"
 
 /**
 CNFy[1:0]: Port x configuration bits (y= 0 .. 7)
@@ -30,11 +28,11 @@ void _startclock(GPIO_RegDef_t *PORT);
 
 void configure_gpio( GPIO_RegDef_t *PORT, int PIN_NR, GPIO_CONFIGURATION gpio_conf){
     
-    _startclock(&PORT);
+    _startclock(PORT);
     
     // 1000 -  INPUT_PUPD
     // 0001 - OUTPUT_GPIO_PUPD_10MHZ
-    uint32_t *conf_register;
+    volatile uint32_t *conf_register;
     int rPIN_NR;
 
     if(PIN_NR<=7){
@@ -44,7 +42,7 @@ void configure_gpio( GPIO_RegDef_t *PORT, int PIN_NR, GPIO_CONFIGURATION gpio_co
         conf_register=&(PORT->CRH);
         rPIN_NR=PIN_NR-8;
     }
-    *conf_register &= ~(0xf << PIN_NR*4);
+    *conf_register &= ~(0xf << rPIN_NR*4);
 
     switch (gpio_conf){
         case INPUT_PUPD:
@@ -78,9 +76,9 @@ void _startclock(GPIO_RegDef_t *PORT){
 
 void set_gpio_output(GPIO_RegDef_t *port, int PIN_NR, int value){
     if(value==0){
-        port->ODR &= ~(1<PIN_NR);
+        port->ODR &= ~(1<<PIN_NR);
     } else{
-        port->ODR |= (1<PIN_NR);
+        port->ODR |= (1<<PIN_NR);
     }    
 }
 
