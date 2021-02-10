@@ -132,7 +132,7 @@ typedef struct
 /*
  * Clock Enable Macros for GPIOx peripherals
  */
-#define GPIOA_PCLK_EN()    	(RCC->APB2ENR |= (1 << 2))
+#define GPIOA_PCLK_EN()   (RCC->APB2ENR |= (1 << 2))
 #define GPIOB_PCLK_EN()		(RCC->APB2ENR |= (1 << 3))
 #define GPIOC_PCLK_EN()		(RCC->APB2ENR |= (1 << 4))
 #define GPIOD_PCLK_EN()		(RCC->APB2ENR |= (1 << 5))
@@ -151,6 +151,7 @@ typedef struct
 #define FLAG_RESET         RESET
 #define FLAG_SET 			SET
 
+#include ""
 //#include "stm32f407xx_gpio_driver.h"
 
 #endif /* STM32F103XX_H_ */

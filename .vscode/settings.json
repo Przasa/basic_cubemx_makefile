@@ -5,6 +5,7 @@
         "stdint.h": "c",
         "stm32f1xx.h": "c",
         "stm32f103xb.h": "c",
-        "system_stm32f1xx.h": "c"
+        "system_stm32f1xx.h": "c",
+        "my_stm32f103xx.h": "c"
     }
 }
