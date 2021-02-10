@@ -10,7 +10,6 @@
                 "UNICODE",
                 "_UNICODE",
                 "STM32F103xB"
-                // "USE_HAL_DRIVER",
 
             ],
             "windowsSdkVersion": "10.0.18362.0",
