@@ -101,8 +101,6 @@ typedef struct
   __vo uint32_t CSR;
   __vo uint32_t AHBSTR;
   __vo uint32_t CFGR2;
-
-
 } RCC_RegDef_t;
 
 /*
@@ -119,15 +117,21 @@ typedef struct
 #define GPIOH  				((GPIO_RegDef_t*)GPIOH_BASEADDR)
 #define GPIOI  				((GPIO_RegDef_t*)GPIOI_BASEADDR)
 
-#define RCC 				((RCC_RegDef_t*)RCC_BASEADDR)
-#define EXTI				((EXTI_RegDef_t*)EXTI_BASEADDR)
+#define RCC 				  ((RCC_RegDef_t*)RCC_BASEADDR)
+#define EXTI				  ((EXTI_RegDef_t*)EXTI_BASEADDR)
 #define SYSCFG				((SYSCFG_RegDef_t*)SYSCFG_BASEADDR)
+
+/********************  Bit definition for RCC_CR register  ********************/
+#define RCC_CFGR_SWS        (0x3UL << 2U)
+#define RCC_CFGR_PLLMULL    (0xFUL << 18U)
+#define RCC_CFGR_PLLSRC     (0x1UL << 16U)
+#define RCC_CFGR_PLLXTPRE   (0x1UL << 17U)   
+#define RCC_CFGR_HPRE       (0xFUL << 4U)
+
 
 /*
  * Clock Enable Macros for GPIOx peripherals
  */
-
-
 #define GPIOA_PCLK_EN()    	(RCC->APB2ENR |= (1 << 2))
 #define GPIOB_PCLK_EN()		(RCC->APB2ENR |= (1 << 3))
 #define GPIOC_PCLK_EN()		(RCC->APB2ENR |= (1 << 4))

@@ -110,9 +110,9 @@ AS_INCLUDES =
 
 # C includes
 C_INCLUDES =  \
--IInc \
--IDrivers/CMSIS/Device/ST/STM32F1xx/Include \
--IDrivers/CMSIS/Include
+-IInc
+# -IDrivers/CMSIS/Device/ST/STM32F1xx/Include \
+# -IDrivers/CMSIS/Include
 # -IDrivers/STM32F1xx_HAL_Driver/Inc \
 # -IDrivers/STM32F1xx_HAL_Driver/Inc/Legacy
 

@@ -52,7 +52,7 @@ int main(void)
 		GPIOA->ODR |= (1<<5);
 		delay(500000);
 		GPIOA->ODR &=~(1<<5);
-		delay(50000);
+		delay(500000);
 	}
 
 	return 0;

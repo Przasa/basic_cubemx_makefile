@@ -1,0 +1,9 @@
+RESET  =0
+HSI_VALUE   (jest w systemie)
+HSE_VALUE   (jest w systemie)
+RCC->CFGR & RCC_CFGR_SWS        (0x3UL << 2U)
+RCC->CFGR & RCC_CFGR_PLLMULL    (0xFUL << 18U)
+RCC->CFGR & RCC_CFGR_PLLSRC     (0x1UL << 16U)
+RCC->CFGR & RCC_CFGR_PLLXTPRE   (0x1UL << 17U)   
+RCC->CFGR & RCC_CFGR_HPRE       (0xFUL << 4U)
+
