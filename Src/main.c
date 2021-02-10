@@ -24,7 +24,7 @@
 
 
 #include<stdio.h>
-
+#include<stdint.h>
 #include "my_stm32f103xx.h"
 
 // void my_delay(void);
@@ -52,7 +52,7 @@ int main(void)
 		GPIOA->ODR |= (1<<5);
 		delay(500000);
 		GPIOA->ODR &=~(1<<5);
-		delay(500000);
+		delay(50000);
 	}
 
 	return 0;
