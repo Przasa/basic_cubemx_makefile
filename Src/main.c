@@ -28,32 +28,56 @@
 #include "my_stm32f103xx.h"
 #include "gpio_handler.h"
 
+void blinking(void);
+void primitive_interrupt(void);
+void  __attribute__((optimize("O0"))) delay(uint32_t value);
+
 // void my_delay(void);
 
 //stabilne miganie dioda. nadaje sie jako baza
+
+//:::::::::DEBUG_SETTINGS:::::::::::::://
+const int MIGACZ =0;
+
+
+int main(void)
+{
+	gpio_configure(GPIOA,5,OUTPUT_GPIO_PUPD_10MHZ);
+	gpio_configure(GPIOC,13,INPUT_PUPD);
+
+	for(;;){
+
+		if(MIGACZ){			blinking();
+		} else	{			primitive_interrupt();		}
+	}
+
+	return 0;
+
+}
 
 void  __attribute__((optimize("O0"))) delay(uint32_t value)
 {
 	for(uint32_t i = 0 ; i < value ; i ++);
 }
 
+void blinking(void){
+	int value;
+	value = gpio_read_input(GPIOC,13);
+	if(value==1){
+		gpio_set_output(GPIOA,5,GPIO_PIN_SET);
+		delay(100000);
+		gpio_set_output(GPIOA,5,GPIO_PIN_RESET);
+		delay(100000);
+	} 
+}
 
-int main(void)
-{
-	int value=0;
-	gpio_configure(GPIOA,5,OUTPUT_GPIO_PUPD_10MHZ);
-	gpio_configure(GPIOC,13,INPUT_PUPD);
-
-	for(;;){
-		value = gpio_read_input(GPIOC,13);
-		delay(10000);
-		if (value==0){
-			gpio_set_output(GPIOA,5,GPIO_PIN_SET);
-		} else if(value==1) {
-			gpio_set_output(GPIOA,5,GPIO_PIN_RESET);
-		}
+void primitive_interrupt(void){
+	int value;
+	value = gpio_read_input(GPIOC,13);
+	delay(10000);
+	if (value==0){
+		gpio_set_output(GPIOA,5,GPIO_PIN_SET);
+	} else if(value==1) {
+		gpio_set_output(GPIOA,5,GPIO_PIN_RESET);
 	}
-
-	return 0;
-
 }
