@@ -40,6 +40,7 @@ void gpio_configure( GPIO_RegDef_t *PORT, int PIN_NR, GPIO_CONFIGURATION gpio_co
 void gpio_set_output(GPIO_RegDef_t *port, int PIN_NR, int value);
 int  gpio_read_input(GPIO_RegDef_t *port, int PIN_NR);
 
+
 #endif  // GPIOHANDLER_H
 
 

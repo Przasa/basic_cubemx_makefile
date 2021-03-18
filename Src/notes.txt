@@ -1,11 +1,31 @@
 2. :::::::::::::::::::::::::::EVENTS/INTERRUPTS:::::::::::::::::::::::::::: *(eventy nie generuja przerwania)
+    Hardware interrupt selection
+To configure the 20 lines as interrupt sources, use the following procedure:
+● Configure the mask bits of the 20 Interrupt lines (EXTI_IMR)
+● Configure the Trigger Selection bits of the Interrupt lines (EXTI_RTSR and
+EXTI_FTSR)
+● Configure the enable and mask bits that control the NVIC IRQ channel mapped to the
+External Interrupt Controller (EXTI) so that an interrupt coming from one of the 20 lines
+can be correctly acknowledged.
+    Hardware event selection
+To configure the 20 lines as event sources, use the following procedure:
+● Configure the mask bits of the 20 Event lines (EXTI_EMR)
+● Configure the Trigger Selection bits of the Event lines (EXTI_RTSR and EXTI_FTSR)
+    Software interrupt/event selection
+The 20 lines can be configured as software interrupt/event lines. The following is the
+procedure to generate a software interrupt.
+● Configure the mask bits of the 20 Interrupt/Event lines (EXTI_IMR, EXTI_EMR)
+● Set the required bit of the software interrupt register (EXTI_SWIER)
+
     czyli:
-    a) AFIO_EXTICRx        -> przypisania interrupta do gpio
+    a) AFIO_EXTICRx         -> przypisania interrupta do gpio
     b) EXTI_IMR             -> ktora linia interrupt
     c) EXTI_RTSR EXTI_FTSR  -> typ zbocza interrupt
     d) NVIC IRQ channel     -> podlaczenie interrupt do wektora obslugi przerwan 
+                               eventy (nie interrupty) chya nie korzystaja z NVICa.
 
 External interrupt configuration register 1 (AFIO_EXTICR1)
+:::::NOTE!: jednen nr interrupta (0:15), mzoe byc przypisane do tylko jednoe portu (np. EXTI5 -> GPIOC)
     9.4.4 External interrupt configuration register 2 (AFIO_EXTICR2)
     EXTI3[3:0] EXTI2[3:0] EXTI1[3:0] EXTI0[3:0]
     Bits 31:16 Reserved
@@ -61,3 +81,28 @@ RCC->CFGR & RCC_CFGR_PLLSRC     (0x1UL << 16U)
 RCC->CFGR & RCC_CFGR_PLLXTPRE   (0x1UL << 17U)   
 RCC->CFGR & RCC_CFGR_HPRE       (0xFUL << 4U)
 
+
+::::::::::::::::::::::::::::GPIO (norm)::::::::::::::::::::::::::::::
+/**
+CNFy[1:0]: Port x configuration bits (y= 0 .. 7)
+These bits are written by software to configure the corresponding I/O port.
+Refer to Table 20: Port bit configuration table on page 156.
+In input mode (MODE[1:0]=00):
+    00: Analog mode
+    01: Floating input (reset state)
+    10: Input with pull-up / pull-down
+    11: Reserved
+In output mode (MODE[1:0] > 00):
+    00: General purpose output push-pull
+    01: General purpose output Open-drain
+    10: Alternate function output Push-pull
+    11: Alternate function output Open-drain
+
+MODEy[1:0]: Port x mode bits (y= 0 .. 7)
+These bits are written by software to configure the corresponding I/O port.
+Refer to Table 20: Port bit configuration table on page 156.
+    00: Input mode (reset state)
+    01: Output mode, max speed 10 MHz.
+    10: Output mode, max speed 2 MHz.
+    11: Output mode, max speed 50 MHz.
+*/

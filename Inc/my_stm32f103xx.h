@@ -134,6 +134,7 @@ typedef struct
 
 #define RCC 				  ((RCC_RegDef_t*)RCC_BASEADDR)
 #define EXTI				  ((EXTI_RegDef_t*)EXTI_BASEADDR)
+#define AFIO          ((AFIO_RegDef_t*)AFIO_BASEADDR)
 // #define SYSCFG				((SYSCFG_RegDef_t*)SYSCFG_BASEADDR)
 
 /********************  Bit definition for RCC_CR register  ********************/
