@@ -21,32 +21,35 @@
 
 #define FLASH_BASEADDR						0x08000000U   		/*!<explain this macro briefly here  */
 #define SRAM1_BASEADDR						0x20000000U  		/*!<explain this macro briefly here  */
-//#define SRAM2_BASEADDR						0x2001C000U 		/*!<explain this macro briefly here  */
+//#define SRAM2_BASEADDR					0x2001C000U 		/*!<explain this macro briefly here  */
 //#define ROM_BASEADDR						0x1FFF0000U
-#define SRAM 								SRAM1_BASEADDR
+#define SRAM 								      SRAM1_BASEADDR
 /*
  * AHBx and APBx Bus Peripheral base addresses
  */
 
-#define PERIPH_BASEADDR 						0x40000000U
+#define PERIPH_BASEADDR 				  		0x40000000U
 #define APB1PERIPH_BASEADDR						PERIPH_BASEADDR
 #define APB2PERIPH_BASEADDR						0x40010000U
 #define AHBPERIPH_BASEADDR						0x40018000U
-//#define AHB2PERIPH_BASEADDR						0x50000000U
+//#define AHB2PERIPH_BASEADDR					0x50000000U     //TEGO NIE MAMY
 /*
  * Base addresses of peripherals which are hanging on AHB1 bus
  * TODO : Complete for all other peripherals
  */
-#define RCC_BASEADDR                     0x40021000U
-#define AFIO_BASEADDR					 (APB2PERIPH_BASEADDR)
+#define RCC_BASEADDR             0x40021000U
+#define EXTI_BASEADDR            0x40010400U
+// #define RCC_BASEADDR             (AHBPERIPH_BASEADDR + 0x9000U)
+// #define EXTI_BASEADDR            (APB2PERIPH_BASEADDR + 0x0400)
 
-#define GPIOA_BASEADDR                   (APB2PERIPH_BASEADDR + 0x0800)
-#define GPIOB_BASEADDR                   (APB2PERIPH_BASEADDR + 0x0C00)
+#define GPIOA_BASEADDR           (APB2PERIPH_BASEADDR + 0x0800)
+#define GPIOB_BASEADDR           (APB2PERIPH_BASEADDR + 0x0C00)
 #define GPIOC_BASEADDR 					 (APB2PERIPH_BASEADDR + 0x1000)
 #define GPIOD_BASEADDR 					 (APB2PERIPH_BASEADDR + 0x1400)
 #define GPIOE_BASEADDR 					 (APB2PERIPH_BASEADDR + 0x1800)
 #define GPIOF_BASEADDR 					 (APB2PERIPH_BASEADDR + 0x1C00)
 #define GPIOG_BASEADDR 					 (APB2PERIPH_BASEADDR + 0x2000)
+#define AFIO_BASEADDR					   (APB2PERIPH_BASEADDR)
 
 
 
@@ -104,22 +107,34 @@ typedef struct
 } RCC_RegDef_t;
 
 /*
+ * peripheral register definition structure for EXTI
+ */
+typedef struct
+{
+  __vo uint32_t EXTI_IMR;
+  __vo uint32_t EXTI_EMR;
+  __vo uint32_t EXTI_RTSR;
+  __vo uint32_t EXTI_FTSR;
+  __vo uint32_t EXTI_SWIER;
+  __vo uint32_t EXTI_PR;
+} EXTI_RegDef_t;
+
+/*
  * peripheral definitions ( Peripheral base addresses typecasted to xxx_RegDef_t)
  */
 
+
+//::::::::::::::::::::::::::::  DEFINITIONS :::::::::::::::::::::::::::::::::::::::://
 #define GPIOA  				((GPIO_RegDef_t*)GPIOA_BASEADDR)
 #define GPIOB  				((GPIO_RegDef_t*)GPIOB_BASEADDR)
 #define GPIOC  				((GPIO_RegDef_t*)GPIOC_BASEADDR)
 #define GPIOD  				((GPIO_RegDef_t*)GPIOD_BASEADDR)
 #define GPIOE  				((GPIO_RegDef_t*)GPIOE_BASEADDR)
 #define GPIOF  				((GPIO_RegDef_t*)GPIOF_BASEADDR)
-#define GPIOG  				((GPIO_RegDef_t*)GPIOG_BASEADDR)
-#define GPIOH  				((GPIO_RegDef_t*)GPIOH_BASEADDR)
-#define GPIOI  				((GPIO_RegDef_t*)GPIOI_BASEADDR)
 
 #define RCC 				  ((RCC_RegDef_t*)RCC_BASEADDR)
 #define EXTI				  ((EXTI_RegDef_t*)EXTI_BASEADDR)
-#define SYSCFG				((SYSCFG_RegDef_t*)SYSCFG_BASEADDR)
+// #define SYSCFG				((SYSCFG_RegDef_t*)SYSCFG_BASEADDR)
 
 /********************  Bit definition for RCC_CR register  ********************/
 #define RCC_CFGR_SWS        (0x3UL << 2U)
@@ -140,7 +155,7 @@ typedef struct
 
 #define AFIO_PCLK_EN()		(RCC->APB2ENR |= (1 << 0))
 
-//some generic macros
+/******************** MACROS  *******************************************/
 
 #define ENABLE 				1
 #define DISABLE 			0

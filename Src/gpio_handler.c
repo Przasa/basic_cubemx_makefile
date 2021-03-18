@@ -46,6 +46,29 @@ void gpio_configure( GPIO_RegDef_t *PORT, int PIN_NR, GPIO_CONFIGURATION gpio_co
     *conf_register |= (gpio_conf << rPIN_NR *4);
 }
 
+
+void gpio_set_output(GPIO_RegDef_t *port, int PIN_NR, int value){
+    if(value==0){
+        port->ODR &= ~(1<<PIN_NR);
+    } else{
+        port->ODR |= (1<<PIN_NR);
+    }    
+}
+
+int gpio_read_input(GPIO_RegDef_t *port, int PIN_NR){
+    int value;
+    value = (port->IDR & (1<<PIN_NR)) >> PIN_NR;
+    return value;
+}
+
+typedef enum{
+    RISING,FALLING,RISING_FALLING
+} INTERRUPT_TYPES;
+
+void gpio_set_interrupt(GPIO_RegDef_t *port, int PIN_NR, INTERRUPT_TYPES itype){
+    
+}
+//::::::::::::::::::::::::::::  PRIVATES    :::::::::::::::::::::::::::::::::://
 void _startclock(GPIO_RegDef_t *PORT){
     if(PORT==GPIOA){
         GPIOA_PCLK_EN();
@@ -62,18 +85,4 @@ void _startclock(GPIO_RegDef_t *PORT){
     if(PORT==GPIOE){
         GPIOE_PCLK_EN();
     }
-}
-
-void gpio_set_output(GPIO_RegDef_t *port, int PIN_NR, int value){
-    if(value==0){
-        port->ODR &= ~(1<<PIN_NR);
-    } else{
-        port->ODR |= (1<<PIN_NR);
-    }    
-}
-
-int gpio_read_input(GPIO_RegDef_t *port, int PIN_NR){
-    int value;
-    value = (port->IDR & (1<<PIN_NR)) >> PIN_NR;
-    return value;
 }
