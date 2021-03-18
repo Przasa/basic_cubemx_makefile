@@ -39,6 +39,7 @@
  */
 #define RCC_BASEADDR             0x40021000U
 #define EXTI_BASEADDR            0x40010400U
+#define NVIC_BASEADDR            0xE000E100
 // #define RCC_BASEADDR             (AHBPERIPH_BASEADDR + 0x9000U)
 // #define EXTI_BASEADDR            (APB2PERIPH_BASEADDR + 0x0400)
 
@@ -50,6 +51,8 @@
 #define GPIOF_BASEADDR 					 (APB2PERIPH_BASEADDR + 0x1C00)
 #define GPIOG_BASEADDR 					 (APB2PERIPH_BASEADDR + 0x2000)
 #define AFIO_BASEADDR					   (APB2PERIPH_BASEADDR)
+
+
 
 
 
@@ -86,6 +89,59 @@ typedef struct
 
 } AFIO_RegDef_t;
 
+/*
+ * peripheral register definition structure for EXTI
+ */
+typedef struct
+{
+  __vo uint32_t EXTI_IMR;
+  __vo uint32_t EXTI_EMR;
+  __vo uint32_t EXTI_RTSR;
+  __vo uint32_t EXTI_FTSR;
+  __vo uint32_t EXTI_SWIER;
+  __vo uint32_t EXTI_PR;
+} EXTI_RegDef_t;
+
+typedef struct
+{
+  __vo uint32_t ISER0;
+  __vo uint32_t ISER1;
+  __vo uint32_t ISER2;
+  __vo uint32_t ICER0;
+  __vo uint32_t ICER1;
+  __vo uint32_t ICER2;
+  __vo uint32_t ISPR0;
+  __vo uint32_t ISPR1;
+  __vo uint32_t ISPR2;
+  __vo uint32_t ICPR0;
+  __vo uint32_t ICPR1;
+  __vo uint32_t ICPR2;
+  __vo uint32_t IABR0;
+  __vo uint32_t IABR1;
+  __vo uint32_t IABR2;
+  __vo uint32_t IABR3;
+  __vo uint32_t IPR0;
+  __vo uint32_t IPR1;
+  __vo uint32_t IPR2;
+  __vo uint32_t IPR3;
+  __vo uint32_t IPR4;
+  __vo uint32_t IPR5;
+  __vo uint32_t IPR6;
+  __vo uint32_t IPR7;
+  __vo uint32_t IPR8;
+  __vo uint32_t IPR9;
+  __vo uint32_t IPR10;  
+  __vo uint32_t IPR11;
+  __vo uint32_t IPR12;
+  __vo uint32_t IPR13;
+  __vo uint32_t IPR14;
+  __vo uint32_t IPR16;
+  __vo uint32_t IPR17;
+  __vo uint32_t IPR18;
+  __vo uint32_t IPR19;
+  __vo uint32_t IPR20;
+  __vo uint32_t STIR;
+} NVIC_RegDef_t;
 
 /*
  * peripheral register definition structure for RCC
@@ -106,18 +162,7 @@ typedef struct
   __vo uint32_t CFGR2;
 } RCC_RegDef_t;
 
-/*
- * peripheral register definition structure for EXTI
- */
-typedef struct
-{
-  __vo uint32_t EXTI_IMR;
-  __vo uint32_t EXTI_EMR;
-  __vo uint32_t EXTI_RTSR;
-  __vo uint32_t EXTI_FTSR;
-  __vo uint32_t EXTI_SWIER;
-  __vo uint32_t EXTI_PR;
-} EXTI_RegDef_t;
+
 
 /*
  * peripheral definitions ( Peripheral base addresses typecasted to xxx_RegDef_t)
@@ -135,6 +180,7 @@ typedef struct
 #define RCC 				  ((RCC_RegDef_t*)RCC_BASEADDR)
 #define EXTI				  ((EXTI_RegDef_t*)EXTI_BASEADDR)
 #define AFIO          ((AFIO_RegDef_t*)AFIO_BASEADDR)
+#define NVIC          ((NVIC_RegDef_t*)NVIC_BASEADDR)
 // #define SYSCFG				((SYSCFG_RegDef_t*)SYSCFG_BASEADDR)
 
 /********************  Bit definition for RCC_CR register  ********************/

@@ -48,6 +48,12 @@ typedef enum{
 void gpio_set_interrupt(GPIO_RegDef_t *port, int PIN_NR, INTERRUPT_TYPES itype){
     // a) AFIO_EXTICRx         -> przypisania interrupta do gpio
     // calculate offset
+
+    //TODO: przeniesinie:
+    _set_interrupt_afio(*port,PIN_NR);
+    _set_interrupt_exti(PIN_NR);
+    _set_interrupt_nvic(interrupt_priority);
+
     volatile uint32_t *afio_configure;
     int reg_offset = PIN_NR % 4;
     int port_nr = _portToDec(port);
@@ -70,6 +76,13 @@ void gpio_set_interrupt(GPIO_RegDef_t *port, int PIN_NR, INTERRUPT_TYPES itype){
     EXTI->EXTI_RTSR |= (1 << PIN_NR);
     // EXTI->EXTI_FTSR |= (1 << PIN_NR);
     // d) NVIC IRQ channel     -> podlaczenie interrupt do wektora obslugi przerwan 
+    NVIC->ISER0 |= ;
+    NVIC->ICER0 |=;
+    NVIC->ISPR0 |=;
+    NVIC->ICPR0 |=;
+    NVIC->IABR0 =;
+    NVIC->IPR0 |=;
+    NVIC->STIR=;
     
 }
 
