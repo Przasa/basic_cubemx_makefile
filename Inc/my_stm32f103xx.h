@@ -2,7 +2,7 @@
  * stm32f103xx.h
  *
  *  Created on: Jan 16, 2021
- *      Author: dj6dvj
+ *      Author: dj6dvj (Piotr Rzasa)
  */
 
 #ifndef STM32F103XX_H_
@@ -14,6 +14,8 @@
 
 #define __vo volatile
 #define __weak __attribute__((weak))
+
+//TODO 19.03.2021: crete nice looking comments (based on Nikarian file)
 
 /*
  * base addresses of Flash and SRAM memories
@@ -51,7 +53,6 @@
 #define GPIOF_BASEADDR 					 (APB2PERIPH_BASEADDR + 0x1C00)
 #define GPIOG_BASEADDR 					 (APB2PERIPH_BASEADDR + 0x2000)
 #define AFIO_BASEADDR					   (APB2PERIPH_BASEADDR)
-
 
 
 
@@ -191,6 +192,7 @@ typedef struct
 #define RCC_CFGR_HPRE       (0xFUL << 4U)
 
 
+/********************  MACROS  ************************************************/
 /*
  * Clock Enable Macros for GPIOx peripherals
  */
@@ -202,8 +204,33 @@ typedef struct
 
 #define AFIO_PCLK_EN()		(RCC->APB2ENR |= (1 << 0))
 
-/******************** MACROS  *******************************************/
 
+/******************** ADDITIONAL VALUES  **************************************/
+#define EXTI_0_POSITION 6
+#define EXTI_1_POSITION 7
+#define EXTI_2_POSITION 8
+#define EXTI_3_POSITION 9
+#define EXTI_4_POSITION 10  
+#define EXTI_5to9_POSITION 23  // WARN: exti 5 to 9 share the same interrupt line
+#define EXTI_10to15_POSITION 40 // WARN: exti 10 to 15 share the same interrupt line
+
+#define EXTI_0_PRIORITY 13
+#define EXTI_1_PRIORITY 14
+#define EXTI_2_PRIORITY 15
+#define EXTI_3_PRIORITY 16
+#define EXTI_4_PRIORITY 17  
+#define EXTI_5to9_PRIORITY 30  // WARN: exti 5 to 9 share the same interrupt line
+#define EXTI_10to15_PRIORITY 47 // WARN: exti 10 to 15 share the same interrupt line
+
+#define EXTI_0_VECTORADDR        0x00000058U
+#define EXTI_1_VECTORADDR        0x0000005CU
+#define EXTI_2_VECTORADDR        0x00000060U
+#define EXTI_3_VECTORADDR        0x00000064U
+#define EXTI_4_VECTORADDR        0x00000068U
+#define EXTI_5to9_VECTORADDR     0x0000009CU
+#define EXTI_10to15_VECTORADDR   0x000000E0U
+
+//************************ 
 #define ENABLE 				1
 #define DISABLE 			0
 #define SET 				ENABLE

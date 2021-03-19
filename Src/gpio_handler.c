@@ -8,6 +8,10 @@ void _startclock(GPIO_RegDef_t *PORT);
 void gpio_clear_pr(int PIN_NR);
 int _portToDec(GPIO_RegDef_t *PORT);
 
+void _set_interrupt_afio(GPIO_RegDef_t *port,int PIN_NR);
+void _set_interrupt_exti(int PIN_NR);
+void _set_interrupt_nvic(int interrupt_position, int interrupt_priority);
+
 void gpio_configure( GPIO_RegDef_t *PORT, int PIN_NR, GPIO_CONFIGURATION gpio_conf){
     
     _startclock(PORT);
@@ -41,50 +45,34 @@ int gpio_read_input(GPIO_RegDef_t *port, int PIN_NR){
     return value;
 }
 
+//TODO 19.03.2021: seel to my_stm32xxx.h
 typedef enum{
     RISING,FALLING,RISING_FALLING
 } INTERRUPT_TYPES;
 
 void gpio_set_interrupt(GPIO_RegDef_t *port, int PIN_NR, INTERRUPT_TYPES itype){
-    // a) AFIO_EXTICRx         -> przypisania interrupta do gpio
-    // calculate offset
 
-    //TODO: przeniesinie:
-    _set_interrupt_afio(*port,PIN_NR);
+    //TODO: pamietaj o zwlaczzeniu clockow do peryferiow.
+    
+    //WARN: czy nie trzeba alt funct dla GPIO? --> chyba nie
+    int interrupt_position;
+    int interrupt_priority;
+
+    if(PIN_NR==0){interrupt_position=EXTI_0_POSITION;interrupt_priority=EXTI_0_PRIORITY;}
+    else if(PIN_NR==1) {{interrupt_position=EXTI_1_POSITION;interrupt_priority=EXTI_1_PRIORITY;}}
+    else if(PIN_NR==2) {{interrupt_position=EXTI_2_POSITION;interrupt_priority=EXTI_2_PRIORITY;}}
+    else if(PIN_NR==3) {{interrupt_position=EXTI_3_POSITION;interrupt_priority=EXTI_3_PRIORITY;}}
+    else if(PIN_NR==4) {{interrupt_position=EXTI_4_POSITION;interrupt_priority=EXTI_4_PRIORITY;}}
+    else if(PIN_NR<=9) {{interrupt_position=EXTI_5to9_POSITION;interrupt_priority=EXTI_5to9_PRIORITY;}}
+    else if(PIN_NR<=15) {{interrupt_position=EXTI_10to15_POSITION;interrupt_priority=EXTI_10to15_PRIORITY;}}
+
+    _set_interrupt_afio(port,PIN_NR);
     _set_interrupt_exti(PIN_NR);
-    _set_interrupt_nvic(interrupt_priority);
-
-    volatile uint32_t *afio_configure;
-    int reg_offset = PIN_NR % 4;
-    int port_nr = _portToDec(port);
-    if(PIN_NR<=3){
-        afio_configure = &(AFIO->EXTICR1);
-    } else if(PIN_NR<=7){
-        afio_configure = &(AFIO->EXTICR2);
-    } else if(PIN_NR<=11){
-        afio_configure = &(AFIO->EXTICR3);
-    } else {
-        afio_configure = &(AFIO->EXTICR4);
-    }
+    _set_interrupt_nvic(interrupt_position, interrupt_priority);
     
-    *afio_configure &= ~(15<< reg_offset);
-    *afio_configure |= (port_nr << reg_offset);
-
-    // b) EXTI_IMR             -> ktora linia interrupt
-    EXTI->EXTI_IMR |= (1<< PIN_NR);
-    // c) EXTI_RTSR EXTI_FTSR  -> typ zbocza interrupt
-    EXTI->EXTI_RTSR |= (1 << PIN_NR);
-    // EXTI->EXTI_FTSR |= (1 << PIN_NR);
-    // d) NVIC IRQ channel     -> podlaczenie interrupt do wektora obslugi przerwan 
-    NVIC->ISER0 |= ;
-    NVIC->ICER0 |=;
-    NVIC->ISPR0 |=;
-    NVIC->ICPR0 |=;
-    NVIC->IABR0 =;
-    NVIC->IPR0 |=;
-    NVIC->STIR=;
-    
+    //TODO 19.03.2021: obluga tablicy  przerwan, clearowanie tablicy
 }
+
 
 void gpio_clear_pr(int PIN_NR){
     EXTI->EXTI_PR &= ~(1<< PIN_NR);
@@ -125,3 +113,81 @@ int _portToDec(GPIO_RegDef_t *PORT){
     }
     
 }
+
+void _set_interrupt_afio(GPIO_RegDef_t *port,int PIN_NR){
+    // a) AFIO_EXTICRx         -> przypisania interrupta do gpio
+
+    volatile uint32_t *afio_configure;
+    int reg_offset = PIN_NR % 4;
+    int port_nr = _portToDec(port);
+    if(PIN_NR<=3){
+        afio_configure = &(AFIO->EXTICR1);
+    } else if(PIN_NR<=7){
+        afio_configure = &(AFIO->EXTICR2);
+    } else if(PIN_NR<=11){
+        afio_configure = &(AFIO->EXTICR3);
+    } else {
+        afio_configure = &(AFIO->EXTICR4);
+    }
+    
+    *afio_configure &= ~(15<< reg_offset);
+    *afio_configure |= (port_nr << reg_offset);
+}
+void _set_interrupt_exti(int PIN_NR){
+    // b) EXTI_IMR             -> ktora linia interrupt
+    EXTI->EXTI_IMR |= (1<< PIN_NR);
+    // c) EXTI_RTSR EXTI_FTSR  -> typ zbocza interrupt
+    EXTI->EXTI_RTSR |= (1 << PIN_NR);
+    // EXTI->EXTI_FTSR |= (1 << PIN_NR);
+}
+
+void _set_interrupt_nvic(int interrupt_line, int interrupt_priority){
+    // d) NVIC IRQ channel     -> podlaczenie interrupt do wektora obslugi przerwan 
+    
+    uint32_t* set_en_reg;
+    uint32_t* clear_en_reg;
+    uint32_t* set_pend_reg;
+    uint32_t* clear_pend_reg;
+    uint32_t* active_bit_reg;
+    uint32_t* priority_reg;
+
+    if(interrupt_line<=31){
+        set_en_reg      =&(NVIC->ISER0);
+        clear_en_reg    =&(NVIC->ICER0);
+        set_pend_reg    =&(NVIC->ISPR0);
+        clear_pend_reg  =&(NVIC->ICPR0);
+        active_bit_reg  =&(NVIC->IABR0);
+    }
+    else if(interrupt_line<=63){
+        set_en_reg      =&(NVIC->ISER1);
+        clear_en_reg    =&(NVIC->ICER1);
+        set_pend_reg    =&(NVIC->ISPR1);
+        clear_pend_reg  =&(NVIC->ICPR1);
+        active_bit_reg  =&(NVIC->IABR1);
+    }
+    else if(interrupt_line<=67){
+        set_en_reg      =&(NVIC->ISER2);
+        clear_en_reg    =&(NVIC->ICER2);
+        set_pend_reg    =&(NVIC->ISPR2);
+        clear_pend_reg  =&(NVIC->ICPR2);
+        active_bit_reg  =&(NVIC->IABR2);
+    }
+
+    if (interrupt_priority > 0){
+        int reg_offset = interrupt_line/4;
+        int byte_offset = interrupt_line % 4;
+        priority_reg = &(NVIC->IPR0) + (4*reg_offset);
+
+        *priority_reg &= ~(15<<byte_offset);
+        *priority_reg |= (interrupt_priority<<byte_offset);
+    }
+
+
+    //TODO 19.03.2021:  Teraz ustaw te pozostale rejestry.
+    //                  +troszke te funcja uladnil
+
+}
+
+void _disable_interrupt_nvic(int interrupt_line, int interrupt_priority){
+}
+
