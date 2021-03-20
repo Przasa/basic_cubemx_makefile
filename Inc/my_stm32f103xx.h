@@ -41,6 +41,7 @@
  */
 #define RCC_BASEADDR             0x40021000U
 #define EXTI_BASEADDR            0x40010400U
+#define SPI_BASEADDR             0x40013000U
 #define NVIC_BASEADDR            0xE000E100
 // #define RCC_BASEADDR             (AHBPERIPH_BASEADDR + 0x9000U)
 // #define EXTI_BASEADDR            (APB2PERIPH_BASEADDR + 0x0400)
@@ -102,6 +103,23 @@ typedef struct
   __vo uint32_t EXTI_SWIER;
   __vo uint32_t EXTI_PR;
 } EXTI_RegDef_t;
+
+/*
+ * peripheral register definition structure for SPI
+ */
+typedef struct
+{
+	__vo uint32_t CR1;        /*!< TODO,     										Address offset: 0x00 */
+	__vo uint32_t CR2;        /*!< TODO,     										Address offset: 0x04 */
+	__vo uint32_t SR;         /*!< TODO,     										Address offset: 0x08 */
+	__vo uint32_t DR;         /*!< TODO,     										Address offset: 0x0C */
+	__vo uint32_t CRCPR;      /*!< TODO,     										Address offset: 0x10 */
+	__vo uint32_t RXCRCR;     /*!< TODO,     										Address offset: 0x14 */
+	__vo uint32_t TXCRCR;     /*!< TODO,     										Address offset: 0x18 */
+	__vo uint32_t I2SCFGR;    /*!< TODO,     										Address offset: 0x1C */
+	__vo uint32_t I2SPR;      /*!< TODO,     										Address offset: 0x20 */
+} SPI_RegDef_t;
+
 
 //TODO: 20.02.2021: moze lepiej wskazac zerowe rejestry i obsluzyc obliczanie rejetrow w driverach?
 //albo tak:
@@ -187,6 +205,7 @@ typedef struct
 
 #define RCC 				  ((RCC_RegDef_t*)RCC_BASEADDR)
 #define EXTI				  ((EXTI_RegDef_t*)EXTI_BASEADDR)
+#define SPI				    ((SPI_RegDeg_t*)SPI_BASEADDR)
 #define AFIO          ((AFIO_RegDef_t*)AFIO_BASEADDR)
 #define NVIC          ((NVIC_RegDef_t*)NVIC_BASEADDR)
 // #define SYSCFG				((SYSCFG_RegDef_t*)SYSCFG_BASEADDR)
@@ -209,6 +228,7 @@ typedef struct
 #define GPIOD_PCLK_EN()		(RCC->APB2ENR |= (1 << 5))
 #define GPIOE_PCLK_EN()		(RCC->APB2ENR |= (1 << 6))
 #define AFIO_PCLK_EN()		(RCC->APB2ENR |= (1 << 0))
+#define SPI_PCLK_EN() 		(RCC->APB2ENR |= (1 << 12))
 
 #define GPIOA_PCLK_DI()   (RCC->APB2ENR &= ~(1 << 2))
 #define GPIOB_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 3))
@@ -216,6 +236,7 @@ typedef struct
 #define GPIOD_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 5))
 #define GPIOE_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 6))
 #define AFIO_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 0))
+#define SPI_PCLK_DI()		  (RCC->APB2ENR &= ~(1 << 12))
 
 #define GPIOA_PCLK_GET()  ((RCC->APB2ENR & (1 << 2)) >> 2)
 #define GPIOB_PCLK_GET()	((RCC->APB2ENR & (1 << 3)) >> 3)
@@ -223,6 +244,7 @@ typedef struct
 #define GPIOD_PCLK_GET()	((RCC->APB2ENR & (1 << 5)) >> 5)
 #define GPIOE_PCLK_GET()	((RCC->APB2ENR & (1 << 6)) >> 6)
 #define AFIO_PCLK_GET()	  ((RCC->APB2ENR & (1 << 0)) >> 0)
+#define SPI_PCLK_GET()	  ((RCC->APB2ENR & (1 << 12)) >> 12)
 
 
 //TODO 20.03.21:
