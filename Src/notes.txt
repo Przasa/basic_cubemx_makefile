@@ -126,40 +126,45 @@ bref:
 a) AFIO_MAPR[0] (lepiej zero) 
     0: No remap (NSS/PA4, SCK/PA5, MISO/PA6, MOSI/PA7)
     1: Remap (NSS/PA15, SCK/PB3, MISO/PB4, MOSI/PB5)
-b) ustawianie GPIOsow (pod full duplex)
+b) ustawianie GPIOsow 
+    (pod full duplex)
     master: SCK: alt.pp. MOSI: alt.pp. MISO: in.float/in.pp, NSS: (HW_M) alt.pp. (HW_MS) in.float/in.pu/in.pd 
     slave:  SCK: in.float. MOSI: in.flaot/ in.pp MISO: alt.pp., NSS: (HW_MS) in.float/in.pu/in.pd
     (simplex)
     master: SCK: alt.pp, MOSI: alt.pp, MISO: -, NSS: (HW_M) alt.pp. (HW_MS) in.float/in.pu/in.pd 
     slave: SCK: in.float, MOSI: -, MISO: alt.pp, NSS: (HW_MS): in.float/in.pu/in.pd
-c)
+c) rejestry SPI: 
+    SPI_CR1:  master: BR[2:0]=xy, SPI_CPOL=xx,CPHA=xx, DFF = 16/8 bit, LSBFIRST, SSM=1, SSI=1, SSOE=1 (if req in outmode), MSTR=1, SPE=1
+    SPI_CR1:  slave: DFF, CPOL, CPHA, LSBFIRST, [hw]NSS(hwmode), SSM(softmode)=1,SS1=0, MSTR=0, SPE=1
+    CPI_CR2:  master: SSOE: 0= SS output disabled (multimaster allowed), 1=ss output enabled (mm not allwed)
+d)  tryby pracy:
+    full-duplex: BIDIMODE=0, RXONLY=0
+    uni, transmit: BIDIMODE=0, RXONLY=0; (jw)
+    uni, rec-only: BIDIMODE=0, RXONLY=1
+    bidi trans:    BIDIMODE=1, BIDIOE=1
+    bidi rec:      BIDIMODE=1, BIDIOE=0;
+e)  wysylanie/obieranie: master: TXE=1 => mozesz wrzucac do SPI_DR, slave: RXNE=1 => mozesz czytac z SPI_DR, BIDIOE=kierunek Bidi, jeszce BSY (szczegolnie przed wylaczenie)
+f) interrupts: TODO 20.03.2021 
 
 Table 25. SPI (GPIO inputs)
 SPI pinout Configuration GPIO configuration
-SPIx_SCK
-Master Alternate function push-pull
-Slave Input floating
-SPIx_MOSI
-Full duplex / master Alternate function push-pull
-Full duplex / slave Input floating / Input pull-up
-Simplex bidirectional data wire / master Alternate function push-pull
-Simplex bidirectional data wire/ slave Not used. Can be used as a GPIO
-SPIx_MISO
-Full duplex / master Input floating / Input pull-up
-Full duplex / slave (point to point) Alternate function push-pull
-Full duplex / slave (multi-slave) Alternate function open drain
-Simplex bidirectional data wire / master Not used. Can be used as a GPIO
-Simplex bidirectional data wire/ slave
-(point to point)
-Alternate function push-pull
-Simplex bidirectional data wire/ slave
-(multi-slave)
-Alternate function open drain
-SPIx_NSS
-Hardware master /slave Input floating/ Input pull-up / Input pull-down
-Hardware master/ NSS output enabled Alternate function push-pull
-Software Not used. Can be used as a GPIO
-Table 26.
+SPIx_SCK:   Master;                                                     Alternate function push-pull
+            Slave;                                                      Input floating
+SPIx_MOSI:  Full duplex / master:                                       Alternate function push-pull
+            Full duplex / slave:                                        Input floating / Input pull-up
+            Simplex bidirectional data wire / master:                   Alternate function push-pull
+            Simplex bidirectional data wire/ slave:                     Not used. Can be used as a GPIO
+SPIx_MISO:  Full duplex / master:                                       Input floating / Input pull-up
+            Full duplex / slave (point to point):                       Alternate function push-pull
+            Full duplex / slave (multi-slave):                          Alternate function open drain
+            Simplex bidirectional data wire / master:                   Not used. Can be used as a GPIO
+            Simplex bidirectional data wire/ slave (point to point):    Alternate function push-pull
+            Simplex bidirectional data wire/ slave (multi-slave):       Alternate function open drain
+SPIx_NSS:   Hardware master /slave:                                     Input floating/ Input pull-up / Input pull-down
+            Hardware master/ NSS output enabled:                        Alternate function push-pull
+            Software:                                                   Not used. Can be used as a GPIO
+
+TODO 20.03.2021 Wez wywal te rzeczy.
 
 Usually, the SPI is connected to external devices through 4 pins:
 ● MISO: Master In / Slave Out data. This pin can be used to transmit data in slave mode
@@ -240,25 +245,25 @@ data transfer and the serial clock (see Figure 238).
 high-level signal during the complete byte transmit sequence. In NSS software mode,
 set the "SSM and SSI" bits in the "SPI_CR1" register. If the NSS pin is required in output
 mode, the SSOE bit only should be set.
-6. The MSTR and SPE bits must be set (they remain set only if the NSS pin is connected
+6. The "MSTR" and "SPE" bits must be set (they remain set only if the NSS pin is connected
 to a high-level signal).
     Transmit sequence
 The transmit sequence begins when a byte is written in the Tx Buffer.
 The data byte is parallel-loaded into the shift register (from the internal bus) during the first
 bit transmission and then shifted out serially to the MOSI pin MSB first or LSB first
-depending on the LSBFIRST bit in the SPI_CR1 register. The TXE flag is set on the transfer
-of data from the Tx Buffer to the shift register and an interrupt is generated if the TXEIE bit in
-the SPI_CR2 register is set.
+depending on the LSBFIRST bit in the SPI_CR1 register. The "TXE flag is set" on the transfer
+of data from the Tx Buffer to the shift register and an "interrupt is generated if the TXEIE bit in"
+"the SPI_CR2 register is set."
     Receive sequence
 For the receiver, when data transfer is complete:
-● The data in the shift register is transferred to the RX Buffer and the RXNE flag is set
-● An interrupt is generated if the RXNEIE bit is set in the SPI_CR2 register
+● The data in the shift register is transferred to the RX Buffer and the "RXNE flag is set"
+● An "interrupt is generated if the RXNEIE bit is set in the SPI_CR2 register"
 At the last sampling clock edge the RXNE bit is set, a copy of the data byte received in the
-shift register is moved to the Rx buffer. When the SPI_DR register is read, the SPI
+shift register is moved to the Rx buffer. "When the SPI_DR register is read", the SPI
 peripheral returns this buffered value.
-Clearing the RXNE bit is performed by reading the SPI_DR register.
+"Clearing the RXNE bit is performed by reading the SPI_DR register."
 A continuous transmit stream can be maintained if the next data to be transmitted is put in
-the Tx buffer once the transmission is started. Note that TXE flag should be ‘1 before any
+the Tx buffer once the transmission is started. Note that "TXE flag should be ‘1" before any
 attempt to write the Tx buffer is made.
 Note: When a master is communicating with SPI slaves which need to be de-selected between
 transmissions, the NSS pin must be configured as GPIO or another GPIO must be used and
@@ -275,18 +280,18 @@ communication. It is mandatory to have the polarity of the communication clock s
 steady state value before the slave and the master are enabled.
 Follow the procedure below to configure the SPI in slave mode:
     Procedure
-1. Set the DFF bit to define 8- or 16-bit data frame format
-2. Select the CPOL and CPHA bits to define one of the four relationships between the
+1. Set the "DFF" bit to define 8- or 16-bit data frame format
+2. Select the "CPOL" and "CPHA" bits to define one of the four relationships between the
 data transfer and the serial clock (see Figure 238). For correct data transfer, the CPOL
 and CPHA bits must be configured in the same way in the slave device and the master
 device.
-3. The frame format (MSB-first or LSB-first depending on the value of the LSBFIRST bit in
+3. The frame format (MSB-first or LSB-first depending on the value of the "LSBFIRST" bit in
 the SPI_CR1 register) must be the same as the master device.
 4. In Hardware mode (refer to Slave select (NSS) pin management on page 676), the
-NSS pin must be connected to a low level signal during the complete byte transmit
-sequence. In NSS software mode, set the SSM bit and clear the SSI bit in the SPI_CR1
+"NSS pin" must be connected to a low level signal during the complete byte transmit
+sequence. In NSS software mode, "set the SSM" bit and "clear the SSI" bit in the SPI_CR1
 register.
-5. Clear the MSTR bit and set the SPE bit (both in the SPI_CR1 register) to assign the
+5. Clear the "MSTR" bit and set the "SPE" bit (both in the SPI_CR1 register) to assign the
 pins to alternate functions.
 In this configuration the MOSI pin is a data input and the MISO pin is a data output.
     Transmit sequence
@@ -294,14 +299,102 @@ The data byte is parallel-loaded into the Tx buffer during a write cycle.
 The transmit sequence begins when the slave device receives the clock signal and the most
 significant bit of the data on its MOSI pin. The remaining bits (the 7 bits in 8-bit data frame
 format, and the 15 bits in 16-bit data frame format) are loaded into the shift-register. The
-TXE flag in the SPI_SR register is set on the transfer of data from the Tx Buffer to the shift
-register and an interrupt is generated if the TXEIE bit in the SPI_CR2 register is set.
+"TXE flag in the SPI_SR" register is set on the transfer of data from the Tx Buffer to the shift
+register and an "interrupt is generated if the TXEIE bit in the SPI_CR2" register is set.
     Receive sequence
 For the receiver, when data transfer is complete:
-● The Data in shift register is transferred to Rx Buffer and the RXNE flag (SPI_SR
+● The Data in shift register is transferred to Rx Buffer and the "RXNE flag" (SPI_SR
 register) is set
-● An Interrupt is generated if the RXNEIE bit is set in the SPI_CR2 register.
+● An "Interrupt is generated if the RXNEIE bit is set in the SPI_CR2 register."
 After the last sampling clock edge the RXNE bit is set, a copy of the data byte received in
-the shift register is moved to the Rx buffer. When the SPI_DR register is read, the SPI
+the shift register is moved to the Rx buffer. When the "SPI_DR" register is read, the SPI
 peripheral returns this buffered value.
-Clearing of the RXNE bit is performed by reading the SPI_DR register.
+"Clearing of the RXNE bit is performed by reading the SPI_DR register."
+
+Configuring the SPI for simplex communication
+The SPI is capable of operating in simplex mode in 2 configurations.
+● 1 clock and 1 bidirectional data wire
+● 1 clock and 1 data wire (receive-only or transmit-only)
+    1 clock and 1 bidirectional data wire (BIDIMODE=1)
+This mode is enabled by "setting the BIDIMODE bit in the SPI_CR1 register". In this mode
+SCK is used for the clock and MOSI in master or MISO in slave mode is used for data
+communication. The transfer "direction (Input/Output) is selected by the BIDIOE bit in the SPI_CR1" register. 
+When this bit is 1, the data line is output otherwise it is input.
+    1 clock and 1 unidirectional data wire (BIDIMODE=0)
+In this mode, the application can use the SPI either in transmit-only mode or in receive-only
+mode.
+    ● Transmit-only mode is "similar to full-duplex mode (BIDIMODE=0, RXONLY=0)": the data
+//"my comnn: zwykly full-duplex, tylko wyrzucony jeden przowod."
+are transmitted on the transmit pin (MOSI in master mode or MISO in slave mode) and
+the receive pin (MISO in master mode or MOSI in slave mode) can be used as a
+general-purpose IO. In this case, the application just needs to ignore the Rx buffer (if
+the data register is read, it does not contain the received value).
+    ● In receive-only mode, the application can disable the SPI output function by setting the
+"RXONLY bit in the SPI_CR2 register". In this case, it frees the transmit IO pin (MOSI in
+master mode or MISO in slave mode), so it can be used for other purposes.
+To start the communication in receive-only mode, configure and enable the SPI:
+    ● In master mode, the communication "starts immediately and stops when the SPE bit is"
+"cleared" and the current reception stops. There is no need to read the BSY flag in this
+mode. It is always set when an SPI communication is ongoing.
+    ● In slave mode, the SPI continues to receive as long as the NSS is pulled down (or the
+SSI bit is cleared in NSS software mode) and the SCK is running.
+
+Data transmission and reception procedures
+Rx and Tx buffers
+In reception, data are received and then stored into an internal Rx buffer while In
+transmission, data are first stored into an internal Tx buffer before being transmitted.
+A read access of the SPI_DR register returns the Rx buffered value whereas a write access
+to the SPI_DR stores the written data into the Tx buffer.
+    Start sequence in master mode
+● In full-duplex ("BIDIMODE=0 and RXONLY=0")
+    – The sequence begins when data are written into the "SPI_DR" register (Tx buffer).
+    – The data are then parallel loaded from the Tx buffer into the 8-bit shift register
+      during the first bit transmission and then shifted out serially to the MOSI pin.
+    – At the same time, the received data on the MISO pin is shifted in serially to the 8-
+      bit shift register and then parallel loaded into the "SPI_DR" register (Rx buffer).
+● In unidirectional receive-only mode ("BIDIMODE=0 and RXONLY=1")
+    – "The sequence begins as soon as SPE=1"
+    – Only the receiver is activated and the received data on the MISO pin are shifted in
+      serially to the 8-bit shift register and then parallel loaded into the "SPI_DR" register
+      (Rx buffer).
+● In bidirectional mode, when transmitting ("BIDIMODE=1 and BIDIOE=1")
+    – The sequence begins "when data are written into the SPI_DR" register (Tx buffer).
+    – The data are then parallel loaded from the Tx buffer into the 8-bit shift register
+      during the first bit transmission and then shifted out serially to the MOSI pin.
+    – No data are received.
+● In bidirectional mode, when receiving ("BIDIMODE=1 and BIDIOE=0")
+    – The sequence begins "as soon as SPE=1 and BIDIOE=0."
+    – The received data on the MOSI pin are shifted in serially to the 8-bit shift register
+      and then parallel loaded into the "SPI_DR" register (Rx buffer).
+    – The transmitter is not activated and no data are shifted out serially to the MOSI
+      pin.
+    Start sequence in slave mode
+● In full-duplex mode ("BIDIMODE=0 and RXONLY=0")
+    – The sequence begins "when the slave device receives the clock signal" and the first
+      bit of the data on its MOSI pin. The 7 remaining bits are loaded into the shift
+      register.
+    – At the same time, the data are parallel loaded from the Tx buffer into the 8-bit shift
+      register during the first bit transmission, and then shifted out serially to the MISO
+      pin. The software must have written the data to be sent before the SPI master
+      device initiates the transfer.
+● In unidirectional receive-only mode ("BIDIMODE=0 and RXONLY=1")
+    – The sequence begins "when the slave device receives the clock signal" and the first
+      bit of the data on its MOSI pin. The 7 remaining bits are loaded into the shift
+      register.
+    – The transmitter is not activated and no data are shifted out serially to the MISO
+      pin.
+● In bidirectional mode, when transmitting ("BIDIMODE=1 and BIDIOE=1")
+    – The sequence begins when the "slave device receives the clock signal and the first"
+      "bit in the Tx buffer is transmitted" on the MISO pin.
+    – The data are then parallel loaded from the Tx buffer into the 8-bit shift register
+      during the first bit transmission and then shifted out serially to the MISO pin. The
+      software must have written the data to be sent before the SPI master device
+      initiates the transfer.
+    – No data are received.
+● In bidirectional mode, when receiving ("BIDIMODE=1 and BIDIOE=0")
+    – The sequence begins "when the slave device receives the clock signal and the first"
+      "bit of the data on its MISO pin."
+    – The received data on the MISO pin are shifted in serially to the 8-bit shift register
+      and then parallel loaded into the SPI_DR register (Rx buffer).
+    – The transmitter is not activated and no data are shifted out serially to the MISO
+      pin.

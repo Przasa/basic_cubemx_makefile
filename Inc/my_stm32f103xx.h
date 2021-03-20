@@ -205,7 +205,7 @@ typedef struct
 
 #define RCC 				  ((RCC_RegDef_t*)RCC_BASEADDR)
 #define EXTI				  ((EXTI_RegDef_t*)EXTI_BASEADDR)
-#define SPI				    ((SPI_RegDeg_t*)SPI_BASEADDR)
+#define SPI				    ((SPI_RegDef_t*)SPI_BASEADDR)
 #define AFIO          ((AFIO_RegDef_t*)AFIO_BASEADDR)
 #define NVIC          ((NVIC_RegDef_t*)NVIC_BASEADDR)
 // #define SYSCFG				((SYSCFG_RegDef_t*)SYSCFG_BASEADDR)
