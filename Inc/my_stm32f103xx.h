@@ -315,6 +315,8 @@ typedef struct
 #define FLAG_RESET         RESET
 #define FLAG_SET 			SET
 
+
+//TODO: 20.03.2021: Ogarnij te moduly
 // #include "gpio_handler.h"
 //#include "stm32f407xx_gpio_driver.h"
 

@@ -38,6 +38,7 @@ BUILD_DIR = build
 C_SOURCES =  \
 Src/main.c \
 Src/gpio_handler.c \
+Src/spi_handler.c \
 Src/system_stm32f1xx.c \
 startup_stm32f103xb.c
 # Src/stm32f1xx_it.c \
