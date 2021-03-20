@@ -4,10 +4,9 @@
 
 
 
-void gpio_clear_pr(int PIN_NR);
+
 void _startclock(GPIO_RegDef_t *PORT);
 int _portToDec(GPIO_RegDef_t *PORT);
-
 void _set_interrupt_afio(GPIO_RegDef_t *port,int PIN_NR);
 void _set_interrupt_exti(int PIN_NR,INTERRUPT_TYPES int_type);
 void _set_interrupt_nvic(int interrupt_position, int interrupt_priority);
@@ -51,6 +50,7 @@ void gpio_set_interrupt(GPIO_RegDef_t *port, int PIN_NR, INTERRUPT_TYPES itype){
     
     //WARN: czy nie trzeba alt funct dla GPIO? --> chyba nie
     int interrupt_position;
+    //WARN: uwazaj na niezainicjowane zmienne
     int interrupt_priority;
 
     if(PIN_NR==0){interrupt_position=EXTI_0_POSITION;interrupt_priority=EXTI_0_PRIORITY;}
@@ -70,7 +70,11 @@ void gpio_set_interrupt(GPIO_RegDef_t *port, int PIN_NR, INTERRUPT_TYPES itype){
 
 
 void gpio_clear_pr(int PIN_NR){
-    EXTI->EXTI_PR &= ~(1<< PIN_NR);
+    // EXTI->EXTI_PR &= ~(1<< PIN_NR);
+    if(EXTI->EXTI_PR & ( 1 << PIN_NR))
+	{
+        EXTI->EXTI_PR |= ( 1 << PIN_NR);
+	}
 }
 //::::::::::::::::::::::::::::  PRIVATES    :::::::::::::::::::::::::::::::::://
 void _startclock(GPIO_RegDef_t *PORT){
@@ -107,6 +111,7 @@ int _portToDec(GPIO_RegDef_t *PORT){
     } else if(PORT==GPIOF){
         return 5;
     }
+    return -1;
     
 }
 
@@ -128,8 +133,8 @@ void _set_interrupt_afio(GPIO_RegDef_t *port,int PIN_NR){
         afio_configure = &(AFIO->EXTICR4);
     }
     
-    *afio_configure &= ~(15<< reg_offset);
-    *afio_configure |= (port_nr << reg_offset);
+    *afio_configure &= ~(15<< reg_offset*4);
+    *afio_configure |= (port_nr << reg_offset*4);
 }
 void _set_interrupt_exti(int PIN_NR,INTERRUPT_TYPES int_type){
     // b) EXTI_IMR             -> ktora linia interrupt
@@ -158,6 +163,7 @@ void _set_interrupt_exti(int PIN_NR,INTERRUPT_TYPES int_type){
 void _set_interrupt_nvic(int interrupt_line, int interrupt_priority){
     // d) NVIC IRQ channel     -> podlaczenie interrupt do wektora obslugi przerwan 
     
+    //warn: 20.03.2021 EE : uwazaj na ziezainicjowane zmienne.
     uint32_t* set_en_reg;
     // uint32_t* clear_en_reg;
     // uint32_t* set_pend_reg;
@@ -207,6 +213,7 @@ void _disable_interrupt_nvic(int interrupt_line, int interrupt_priority){
     //TODO: 19.03.2021; jakis madrzejszy mechanizm wybiarania rejestru
     //TODO: 20.03.2021; szkoda robic takie powtorzenia
 
+    //WARN 20.03.21; uwazaja nie niezainicjowane zmienne
     // uint32_t* set_en_reg;
     uint32_t* clear_en_reg;
     // uint32_t* set_pend_reg;

@@ -23,6 +23,9 @@
 //#endif
 
 
+// TODO: 20.02.2021: wydzialic exti do osobnego piku, jak nikaran
+// TODO: 20.02.2021: zrobic zmienne na LED_PIN, BTN_PIN itp.
+
 #include<stdio.h>
 #include<stdint.h>
 #include "my_stm32f103xx.h"
@@ -84,13 +87,24 @@ void primitive_interrupt(void){
 	}
 }
 
+void EXTI9_5_IRQHandler(){
+	int test=2;
+	test+=2;
+
+}
+
 void EXTI15_10_IRQHandler(){
-	int value = gpio_read_input(GPIOC,13);
+
+	int button=gpio_read_input(GPIOC,13);
+	int value = gpio_read_input(GPIOA,5);
 	if (value==0){
 		gpio_set_output(GPIOA,5,GPIO_PIN_SET);
 	} else if(value==1) {
 		gpio_set_output(GPIOA,5,GPIO_PIN_RESET);
 	}
 	delay(10000);
+	gpio_clear_pr(13);
+
+	
 
 }

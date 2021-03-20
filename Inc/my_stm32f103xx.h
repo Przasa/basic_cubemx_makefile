@@ -104,6 +104,12 @@ typedef struct
 } EXTI_RegDef_t;
 
 //TODO: 20.02.2021: moze lepiej wskazac zerowe rejestry i obsluzyc obliczanie rejetrow w driverach?
+//albo tak:
+  // 	__vo uint32_t LCKR;
+  // 	__vo uint32_t AFR[2];					 /*!< AFR[0] : GPIO alternate function low register, AF[1] : GPIO alternate function high register    		Address offset: 0x20-0x24 */
+  // }GPIO_RegDef_t;
+
+
 typedef struct
 {
   __vo uint32_t ISER0;
@@ -211,12 +217,44 @@ typedef struct
 #define GPIOE_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 6))
 #define AFIO_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 0))
 
-#define GPIOA_PCLK_GET()  (RCC->APB2ENR &= (1 << 2) >> 2)
-#define GPIOB_PCLK_GET()	(RCC->APB2ENR &= (1 << 3) >> 3)
-#define GPIOC_PCLK_GET()	(RCC->APB2ENR &= (1 << 4) >> 4)
-#define GPIOD_PCLK_GET()	(RCC->APB2ENR &= (1 << 5) >> 5)
-#define GPIOE_PCLK_GET()	(RCC->APB2ENR &= (1 << 6) >> 6)
-#define AFIO_PCLK_GET()	  (RCC->APB2ENR &= (1 << 0) >> 0)
+#define GPIOA_PCLK_GET()  ((RCC->APB2ENR & (1 << 2)) >> 2)
+#define GPIOB_PCLK_GET()	((RCC->APB2ENR & (1 << 3)) >> 3)
+#define GPIOC_PCLK_GET()	((RCC->APB2ENR & (1 << 4)) >> 4)
+#define GPIOD_PCLK_GET()	((RCC->APB2ENR & (1 << 5)) >> 5)
+#define GPIOE_PCLK_GET()	((RCC->APB2ENR & (1 << 6)) >> 6)
+#define AFIO_PCLK_GET()	  ((RCC->APB2ENR & (1 << 0)) >> 0)
+
+
+//TODO 20.03.21:
+// /*
+//  *  Macros to reset GPIOx peripherals
+//  */
+// #define GPIOA_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 0)); (RCC->AHB1RSTR &= ~(1 << 0)); }while(0)
+// #define GPIOB_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 1)); (RCC->AHB1RSTR &= ~(1 << 1)); }while(0)
+// #define GPIOC_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 2)); (RCC->AHB1RSTR &= ~(1 << 2)); }while(0)
+// #define GPIOD_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 3)); (RCC->AHB1RSTR &= ~(1 << 3)); }while(0)
+// #define GPIOE_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 4)); (RCC->AHB1RSTR &= ~(1 << 4)); }while(0)
+// #define GPIOF_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 5)); (RCC->AHB1RSTR &= ~(1 << 5)); }while(0)
+// #define GPIOG_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 6)); (RCC->AHB1RSTR &= ~(1 << 6)); }while(0)
+// #define GPIOH_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 7)); (RCC->AHB1RSTR &= ~(1 << 7)); }while(0)
+// #define GPIOI_REG_RESET()               do{ (RCC->AHB1RSTR |= (1 << 8)); (RCC->AHB1RSTR &= ~(1 << 8)); }while(0)
+
+
+// /*
+//  *  returns port code for given GPIOx base address
+//  */
+// /*
+//  * This macro returns a code( between 0 to 7) for a given GPIO base address(x)
+//  */
+// #define GPIO_BASEADDR_TO_CODE(x)      ( (x == GPIOA)?0:\
+// 										(x == GPIOB)?1:\
+// 										(x == GPIOC)?2:\
+// 										(x == GPIOD)?3:\
+// 								        (x == GPIOE)?4:\
+// 								        (x == GPIOF)?5:\
+// 								        (x == GPIOG)?6:\
+// 								        (x == GPIOH)?7: \
+// 								        (x == GPIOI)?8:0)
 
 
 
