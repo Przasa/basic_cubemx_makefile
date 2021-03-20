@@ -1,3 +1,79 @@
+2. :::::::::::::::::::::::::::EVENTS/INTERRUPTS:::::::::::::::::::::::::::: *(eventy nie generuja przerwania)
+    Hardware interrupt selection
+To configure the 20 lines as interrupt sources, use the following procedure:
+● Configure the mask bits of the 20 Interrupt lines (EXTI_IMR)
+● Configure the Trigger Selection bits of the Interrupt lines (EXTI_RTSR and
+EXTI_FTSR)
+● Configure the enable and mask bits that control the NVIC IRQ channel mapped to the
+External Interrupt Controller (EXTI) so that an interrupt coming from one of the 20 lines
+can be correctly acknowledged.
+    Hardware event selection
+To configure the 20 lines as event sources, use the following procedure:
+● Configure the mask bits of the 20 Event lines (EXTI_EMR)
+● Configure the Trigger Selection bits of the Event lines (EXTI_RTSR and EXTI_FTSR)
+    Software interrupt/event selection
+The 20 lines can be configured as software interrupt/event lines. The following is the
+procedure to generate a software interrupt.
+● Configure the mask bits of the 20 Interrupt/Event lines (EXTI_IMR, EXTI_EMR)
+● Set the required bit of the software interrupt register (EXTI_SWIER)
+
+    czyli:
+    a) AFIO_EXTICRx         -> przypisania interrupta do gpio
+    b) EXTI_IMR             -> ktora linia interrupt
+    c) EXTI_RTSR EXTI_FTSR  -> typ zbocza interrupt
+    d) NVIC IRQ channel     -> podlaczenie interrupt do wektora obslugi przerwan 
+                               eventy (nie interrupty) chya nie korzystaja z NVICa.
+
+External interrupt configuration register 1 (AFIO_EXTICR1)
+:::::NOTE!: jednen nr interrupta (0:15), mzoe byc przypisane do tylko jednoe portu (np. EXTI5 -> GPIOC)
+    9.4.4 External interrupt configuration register 2 (AFIO_EXTICR2)
+    EXTI3[3:0] EXTI2[3:0] EXTI1[3:0] EXTI0[3:0]
+    Bits 31:16 Reserved
+    Bits 15:0 EXTIx[3:0]: EXTI x configuration (x= 0 to 3)
+    These bits are written by software to select the source input for EXTIx external interrupt.
+    Refer to Section 10.2.5: External interrupt/event line mapping on page 200
+    0000: PA[x] pin
+    0001: PB[x] pin
+    0010: PC[x] pin
+    0011: PD[x] pin
+    0100: PE[x] pin
+    0101: PF[x] pin
+    0110: PG[x] pin
+Interrupt mask register (EXTI_IMR)
+    0: Interrupt request from Line x is masked
+    1: Interrupt request from Line x is not masked
+Rising trigger selection register (EXTI_RTSR)
+    0: Rising trigger disabled (for Event and Interrupt) for input line
+    1: Rising trigger enabled (for Event and Interrupt) for input line.
+Falling trigger selection register (EXTI_FTSR)
+    0: Falling trigger disabled (for Event and Interrupt) for input line
+    1: Falling trigger enabled (for Event and Interrupt) for input line.
+NVIC:
+The base address of the main NVIC register block is 0xE000E100. The NVIC_STIR register is located in a separate block at 0xE000EF00.
+//TODO: 20.03.2021: UZUPELNIJ
+
+Hardware interrupt selection
+To configure the 20 lines as interrupt sources, use the following procedure:
+● Configure the mask bits of the 20 Interrupt lines (EXTI_IMR)
+● Configure the Trigger Selection bits of the Interrupt lines (EXTI_RTSR and
+EXTI_FTSR)
+● Configure the enable and mask bits that control the NVIC IRQ channel mapped to the
+External Interrupt Controller (EXTI) so that an interrupt coming from one of the 20 lines
+can be correctly acknowledged.
+
+Hardware event selection
+To configure the 20 lines as event sources, use the following procedure:
+● Configure the mask bits of the 20 Event lines (EXTI_EMR)
+● Configure the Trigger Selection bits of the Event lines (EXTI_RTSR and EXTI_FTSR)
+
+Software interrupt/event selection
+The 20 lines can be configured as software interrupt/event lines. The following is the
+procedure to generate a software interrupt.
+● Configure the mask bits of the 20 Interrupt/Event lines (EXTI_IMR, EXTI_EMR)
+● Set the required bit of the software interrupt register (EXTI_SWIER)
+
+
+1. :::::::::::::::::::::::::::REJESTRY POTRZEBNE DLA system_stm32f1xx.h::::::::::::::::::::::::::::)
 RESET  =0
 HSI_VALUE   (jest w systemie)
 HSE_VALUE   (jest w systemie)
@@ -6,4 +82,43 @@ RCC->CFGR & RCC_CFGR_PLLMULL    (0xFUL << 18U)
 RCC->CFGR & RCC_CFGR_PLLSRC     (0x1UL << 16U)
 RCC->CFGR & RCC_CFGR_PLLXTPRE   (0x1UL << 17U)   
 RCC->CFGR & RCC_CFGR_HPRE       (0xFUL << 4U)
+
+
+::::::::::::::::::::::::::::GPIO (norm)::::::::::::::::::::::::::::::
+/**
+CNFy[1:0]: Port x configuration bits (y= 0 .. 7)
+These bits are written by software to configure the corresponding I/O port.
+Refer to Table 20: Port bit configuration table on page 156.
+In input mode (MODE[1:0]=00):
+    00: Analog mode
+    01: Floating input (reset state)
+    10: Input with pull-up / pull-down
+    11: Reserved
+In output mode (MODE[1:0] > 00):
+    00: General purpose output push-pull
+    01: General purpose output Open-drain
+    10: Alternate function output Push-pull
+    11: Alternate function output Open-drain
+
+MODEy[1:0]: Port x mode bits (y= 0 .. 7)
+These bits are written by software to configure the corresponding I/O port.
+Refer to Table 20: Port bit configuration table on page 156.
+    00: Input mode (reset state)
+    01: Output mode, max speed 10 MHz.
+    10: Output mode, max speed 2 MHz.
+    11: Output mode, max speed 50 MHz.
+*/
+
+
+::::::::::::::::::::::::::::PRZEBIEG POCZATKOWY::::::::::::::::::::::::::::::
+1. MakeFile kompiluje pliki wskazane od MakeFile.m
+2. Uruchamiany jest startup_stm32f103xb.c (przedtem byl w asseblerze)
+    a) uruchamiane jest pierwsze przerwanei z wektora tablic: Reset_Handler_C()
+3. Reset_Handler_C: 
+    a) tam inicjowane sa segmeny danych (data, bss, sbss itp.)
+    b) SystmeInit(); (z system_stm32f1xx.c)
+        - ustawnia clockow (dorzucone kilka zminnych w my_stm32f103xx.h)
+    c) __libc_init_arrau(); inijowanie wektora przerwan: 
+    c) wywalnie funkcji main (chociaz nie wiem skad)
+
 
