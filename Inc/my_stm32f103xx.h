@@ -103,6 +103,7 @@ typedef struct
   __vo uint32_t EXTI_PR;
 } EXTI_RegDef_t;
 
+//TODO: 20.02.2021: moze lepiej wskazac zerowe rejestry i obsluzyc obliczanie rejetrow w driverach?
 typedef struct
 {
   __vo uint32_t ISER0;

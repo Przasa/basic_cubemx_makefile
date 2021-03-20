@@ -145,49 +145,89 @@ void _set_interrupt_nvic(int interrupt_line, int interrupt_priority){
     // d) NVIC IRQ channel     -> podlaczenie interrupt do wektora obslugi przerwan 
     
     uint32_t* set_en_reg;
-    uint32_t* clear_en_reg;
-    uint32_t* set_pend_reg;
-    uint32_t* clear_pend_reg;
-    uint32_t* active_bit_reg;
+    // uint32_t* clear_en_reg;
+    // uint32_t* set_pend_reg;
+    // uint32_t* clear_pend_reg;
+    // uint32_t* active_bit_reg;
     uint32_t* priority_reg;
 
+    int set_reg_offset = interrupt_line % 32;
+    int int_reg_offset = interrupt_line/4;
+    int int_byte_offset = interrupt_line % 4;
+    
+
+    //TODO: 20.03.2021; jakis madrzejszy mechanizm wybiarania rejestru
     if(interrupt_line<=31){
         set_en_reg      =&(NVIC->ISER0);
-        clear_en_reg    =&(NVIC->ICER0);
-        set_pend_reg    =&(NVIC->ISPR0);
-        clear_pend_reg  =&(NVIC->ICPR0);
-        active_bit_reg  =&(NVIC->IABR0);
+        // clear_en_reg    =&(NVIC->ICER0);
+        // set_pend_reg    =&(NVIC->ISPR0);
+        // clear_pend_reg  =&(NVIC->ICPR0);
+        // active_bit_reg  =&(NVIC->IABR0);
     }
     else if(interrupt_line<=63){
         set_en_reg      =&(NVIC->ISER1);
-        clear_en_reg    =&(NVIC->ICER1);
-        set_pend_reg    =&(NVIC->ISPR1);
-        clear_pend_reg  =&(NVIC->ICPR1);
-        active_bit_reg  =&(NVIC->IABR1);
+        // clear_en_reg    =&(NVIC->ICER1);
+        // set_pend_reg    =&(NVIC->ISPR1);
+        // clear_pend_reg  =&(NVIC->ICPR1);
+        // active_bit_reg  =&(NVIC->IABR1);
     }
     else if(interrupt_line<=67){
         set_en_reg      =&(NVIC->ISER2);
-        clear_en_reg    =&(NVIC->ICER2);
-        set_pend_reg    =&(NVIC->ISPR2);
-        clear_pend_reg  =&(NVIC->ICPR2);
-        active_bit_reg  =&(NVIC->IABR2);
+        // clear_en_reg    =&(NVIC->ICER2);
+        // set_pend_reg    =&(NVIC->ISPR2);
+        // clear_pend_reg  =&(NVIC->ICPR2);
+        // active_bit_reg  =&(NVIC->IABR2);
     }
+    *set_en_reg |= (1<<set_reg_offset);
 
     if (interrupt_priority > 0){
-        int reg_offset = interrupt_line/4;
-        int byte_offset = interrupt_line % 4;
-        priority_reg = &(NVIC->IPR0) + (4*reg_offset);
+        priority_reg = &(NVIC->IPR0) + (4*int_reg_offset);
 
-        *priority_reg &= ~(15<<byte_offset);
-        *priority_reg |= (interrupt_priority<<byte_offset);
+        *priority_reg &= ~(15<<int_byte_offset);
+        *priority_reg |= (interrupt_priority<<int_byte_offset);
     }
-
-
-    //TODO 19.03.2021:  Teraz ustaw te pozostale rejestry.
-    //                  +troszke te funcja uladnil
 
 }
 
 void _disable_interrupt_nvic(int interrupt_line, int interrupt_priority){
+    //TODO: 19.03.2021; jakis madrzejszy mechanizm wybiarania rejestru
+    //TODO: 20.03.2021; szkoda robic takie powtorzenia
+
+    // uint32_t* set_en_reg;
+    uint32_t* clear_en_reg;
+    // uint32_t* set_pend_reg;
+    // uint32_t* clear_pend_reg;
+    // uint32_t* active_bit_reg;
+    // uint32_t* priority_reg;
+
+    int set_reg_offset = interrupt_line % 32;
+    // int int_reg_offset = interrupt_line/4;
+    // int int_byte_offset = interrupt_line % 4;
+
+    if(interrupt_line<=31){
+        // set_en_reg      =&(NVIC->ISER0);
+        clear_en_reg    =&(NVIC->ICER0);
+        // set_pend_reg    =&(NVIC->ISPR0);
+        // clear_pend_reg  =&(NVIC->ICPR0);
+        // active_bit_reg  =&(NVIC->IABR0);
+    }
+    else if(interrupt_line<=63){
+        // set_en_reg      =&(NVIC->ISER1);
+        clear_en_reg    =&(NVIC->ICER1);
+        // set_pend_reg    =&(NVIC->ISPR1);
+        // clear_pend_reg  =&(NVIC->ICPR1);
+        // active_bit_reg  =&(NVIC->IABR1);
+    }
+    else if(interrupt_line<=67){
+        // set_en_reg      =&(NVIC->ISER2);
+        clear_en_reg    =&(NVIC->ICER2);
+        // set_pend_reg    =&(NVIC->ISPR2);
+        // clear_pend_reg  =&(NVIC->ICPR2);
+        // active_bit_reg  =&(NVIC->IABR2);
+    }
+    *clear_en_reg |= (1<<set_reg_offset);
+
 }
+
+
 
