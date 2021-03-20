@@ -1,4 +1,52 @@
-2. :::::::::::::::::::::::::::EVENTS/INTERRUPTS:::::::::::::::::::::::::::: *(eventy nie generuja przerwania)
+::::::::::::::::::::::::::::PRZEBIEG POCZATKOWY::::::::::::::::::::::::::::::
+1. MakeFile kompiluje pliki wskazane od MakeFile.m
+2. Uruchamiany jest startup_stm32f103xb.c (przedtem byl w asseblerze)
+    a) uruchamiane jest pierwsze przerwanei z wektora tablic: Reset_Handler_C()
+3. Reset_Handler_C: 
+    a) tam inicjowane sa segmeny danych (data, bss, sbss itp.)
+    b) SystmeInit(); (z system_stm32f1xx.c)
+        - ustawnia clockow (dorzucone kilka zminnych w my_stm32f103xx.h)
+    c) __libc_init_arrau(); inijowanie wektora przerwan: 
+    c) wywalnie funkcji main (chociaz nie wiem skad)
+
+1. :::::::::::::::::::::::::::REJESTRY POTRZEBNE DLA system_stm32f1xx.h::::::::::::::::::::::::::::)
+RESET  =0
+HSI_VALUE   (jest w systemie)
+HSE_VALUE   (jest w systemie)
+RCC->CFGR & RCC_CFGR_SWS        (0x3UL << 2U)
+RCC->CFGR & RCC_CFGR_PLLMULL    (0xFUL << 18U)
+RCC->CFGR & RCC_CFGR_PLLSRC     (0x1UL << 16U)
+RCC->CFGR & RCC_CFGR_PLLXTPRE   (0x1UL << 17U)   
+RCC->CFGR & RCC_CFGR_HPRE       (0xFUL << 4U)
+
+
+2. ::::::::::::::::::::::::::::GPIO (norm)::::::::::::::::::::::::::::::
+/**
+CNFy[1:0]: Port x configuration bits (y= 0 .. 7)
+These bits are written by software to configure the corresponding I/O port.
+Refer to Table 20: Port bit configuration table on page 156.
+In input mode (MODE[1:0]=00):
+    00: Analog mode
+    01: Floating input (reset state)
+    10: Input with pull-up / pull-down
+    11: Reserved
+In output mode (MODE[1:0] > 00):
+    00: General purpose output push-pull
+    01: General purpose output Open-drain
+    10: Alternate function output Push-pull
+    11: Alternate function output Open-drain
+
+MODEy[1:0]: Port x mode bits (y= 0 .. 7)
+These bits are written by software to configure the corresponding I/O port.
+Refer to Table 20: Port bit configuration table on page 156.
+    00: Input mode (reset state)
+    01: Output mode, max speed 10 MHz.
+    10: Output mode, max speed 2 MHz.
+    11: Output mode, max speed 50 MHz.
+*/
+
+
+3. :::::::::::::::::::::::::::EVENTS/INTERRUPTS:::::::::::::::::::::::::::: *(eventy nie generuja przerwania)
     Hardware interrupt selection
 To configure the 20 lines as interrupt sources, use the following procedure:
 ● Configure the mask bits of the 20 Interrupt lines (EXTI_IMR)
@@ -72,53 +120,188 @@ procedure to generate a software interrupt.
 ● Configure the mask bits of the 20 Interrupt/Event lines (EXTI_IMR, EXTI_EMR)
 ● Set the required bit of the software interrupt register (EXTI_SWIER)
 
+2. ::::::::::::::::::::::::::::SPI:::::::::::::::::::::::::::::::::::::::::
+bref:
+0) wlaczenie clocka: (to check)
+a) AFIO_MAPR[0] (lepiej zero) 
+    0: No remap (NSS/PA4, SCK/PA5, MISO/PA6, MOSI/PA7)
+    1: Remap (NSS/PA15, SCK/PB3, MISO/PB4, MOSI/PB5)
+b) ustawianie GPIOsow (pod full duplex)
+    master: SCK: alt.pp. MOSI: alt.pp. MISO: in.float/in.pp, NSS: (HW_M) alt.pp. (HW_MS) in.float/in.pu/in.pd 
+    slave:  SCK: in.float. MOSI: in.flaot/ in.pp MISO: alt.pp., NSS: (HW_MS) in.float/in.pu/in.pd
+    (simplex)
+    master: SCK: alt.pp, MOSI: alt.pp, MISO: -, NSS: (HW_M) alt.pp. (HW_MS) in.float/in.pu/in.pd 
+    slave: SCK: in.float, MOSI: -, MISO: alt.pp, NSS: (HW_MS): in.float/in.pu/in.pd
+c)
 
-1. :::::::::::::::::::::::::::REJESTRY POTRZEBNE DLA system_stm32f1xx.h::::::::::::::::::::::::::::)
-RESET  =0
-HSI_VALUE   (jest w systemie)
-HSE_VALUE   (jest w systemie)
-RCC->CFGR & RCC_CFGR_SWS        (0x3UL << 2U)
-RCC->CFGR & RCC_CFGR_PLLMULL    (0xFUL << 18U)
-RCC->CFGR & RCC_CFGR_PLLSRC     (0x1UL << 16U)
-RCC->CFGR & RCC_CFGR_PLLXTPRE   (0x1UL << 17U)   
-RCC->CFGR & RCC_CFGR_HPRE       (0xFUL << 4U)
+Table 25. SPI (GPIO inputs)
+SPI pinout Configuration GPIO configuration
+SPIx_SCK
+Master Alternate function push-pull
+Slave Input floating
+SPIx_MOSI
+Full duplex / master Alternate function push-pull
+Full duplex / slave Input floating / Input pull-up
+Simplex bidirectional data wire / master Alternate function push-pull
+Simplex bidirectional data wire/ slave Not used. Can be used as a GPIO
+SPIx_MISO
+Full duplex / master Input floating / Input pull-up
+Full duplex / slave (point to point) Alternate function push-pull
+Full duplex / slave (multi-slave) Alternate function open drain
+Simplex bidirectional data wire / master Not used. Can be used as a GPIO
+Simplex bidirectional data wire/ slave
+(point to point)
+Alternate function push-pull
+Simplex bidirectional data wire/ slave
+(multi-slave)
+Alternate function open drain
+SPIx_NSS
+Hardware master /slave Input floating/ Input pull-up / Input pull-down
+Hardware master/ NSS output enabled Alternate function push-pull
+Software Not used. Can be used as a GPIO
+Table 26.
 
+Usually, the SPI is connected to external devices through 4 pins:
+● MISO: Master In / Slave Out data. This pin can be used to transmit data in slave mode
+    and receive data in master mode.
+● MOSI: Master Out / Slave In data. This pin can be used to transmit data in master
+    mode and receive data in slave mode.
+● SCK: Serial Clock output for SPI masters and input for SPI slaves.
+● NSS: Slave select. This is an optional pin to select a slave device. This pin acts as a
+    ‘chip select’ to let the SPI master communicate with slaves individually and to avoid
+    contention on the data lines. Slave NSS inputs can be driven by standard IO ports on
+    the master device. The NSS pin may also be used as an output if enabled ( "SSOE" bit)
+    and driven low if the SPI is in master configuration. In this manner, all NSS pins from
+    devices connected to the Master NSS pin see a low level and become slaves when
+    they are configured in NSS hardware mode. When configured in master mode with
+    NSS configured as an input ("MSTR"=1 and "SSOE"=0) and if NSS is pulled low, the SPI
+    enters the "master mode fault state": the MSTR bit is automatically cleared and the
+    device is configured in slave mode (refer to Section 25.3.10: Error flags on page 693).
 
-::::::::::::::::::::::::::::GPIO (norm)::::::::::::::::::::::::::::::
-/**
-CNFy[1:0]: Port x configuration bits (y= 0 .. 7)
-These bits are written by software to configure the corresponding I/O port.
-Refer to Table 20: Port bit configuration table on page 156.
-In input mode (MODE[1:0]=00):
-    00: Analog mode
-    01: Floating input (reset state)
-    10: Input with pull-up / pull-down
-    11: Reserved
-In output mode (MODE[1:0] > 00):
-    00: General purpose output push-pull
-    01: General purpose output Open-drain
-    10: Alternate function output Push-pull
-    11: Alternate function output Open-drain
+Slave select (NSS) pin management
+Hardware or software slave select management can be set using the SSM bit in the
+SPI_CR1 register.
+● Software NSS management (SSM = 1)
+    The slave select information is "driven internally" by the value of the SSI bit in the
+    "SPI_CR1" register. The "external NSS pin remains free for other application uses."
+● Hardware NSS management (SSM = 0)
+    Two configurations are possible depending on the NSS output configuration ("SSOE" bit
+    in register "SPI_CR1").
+    – NSS output enabled ("SSM = 0, SSOE = 1")
+        This configuration is used "only when the device operates in master mode." The
+        NSS signal is driven low when the master starts the communication and is kept
+        low until the SPI is disabled.
+    – NSS output disabled ("SSM = 0, SSOE = 0")
+        This configuration allows "multimaster capability" for devices operating in master
+        mode. For devices set as slave, the NSS pin acts as a classical NSS input: the
+        slave is selected when NSS is low and deselected when NSS high.
 
-MODEy[1:0]: Port x mode bits (y= 0 .. 7)
-These bits are written by software to configure the corresponding I/O port.
-Refer to Table 20: Port bit configuration table on page 156.
-    00: Input mode (reset state)
-    01: Output mode, max speed 10 MHz.
-    10: Output mode, max speed 2 MHz.
-    11: Output mode, max speed 50 MHz.
-*/
+Clock phase and clock polarity
+Four possible timing relationships may be chosen by software, using the "CPOL and CPHA"
+bits in the "SPI_CR1" register. The CPOL (clock polarity) bit controls the steady state value of
+the clock when no data is being transferred. This bit affects both master and slave modes. If
+CPOL is reset, the SCK pin has a low-level idle state. If CPOL is set, the SCK pin has a
+high-level idle state.
+If the CPHA (clock phase) bit is set, the second edge on the SCK pin (falling edge if the
+CPOL bit is reset, rising edge if the CPOL bit is set) is the MSBit capture strobe. Data are
+latched on the occurrence of the second clock transition. If the CPHA bit is reset, the first
+edge on the SCK pin (falling edge if CPOL bit is set, rising edge if CPOL bit is reset) is the
+MSBit capture strobe. Data are latched on the occurrence of the first clock transition.
+The combination of the CPOL (clock polarity) and CPHA (clock phase) bits selects the data
+capture clock edge.
+Figure 238, shows an SPI transfer with the four combinations of the CPHA and CPOL bits.
+The diagram may be interpreted as a master or slave timing diagram where the SCK pin, the
+MISO pin, the MOSI pin are directly connected between the master and the slave device.
+Note: 
+    1 Prior to changing the CPOL/CPHA bits the SPI must be disabled by resetting the SPE bit.
+    2 Master and slave must be programmed with the same timing mode.
+    3 The idle state of SCK must correspond to the polarity selected in the SPI_CR1 register (by
+    pulling up SCK if CPOL=1 or pulling down SCK if CPOL=0).
+    4 The Data Frame Format (8- or 16-bit) is selected through the DFF bit in SPI_CR1 register,
+    and determines the data length during transmission/reception.
+my comment: CPOL: oznacza stan domyslny (idle), CPHA (oznacz zbocze w kotrym samplujemy (0-pierwsze, 1-drugie)
 
+Data frame format
+Data can be shifted out either MSB-first or LSB-first depending on the value of the
+"LSBFIRST" bit in the "SPI_CR1" Register.
+Each data frame is 8 or 16 bits long depending on the size of the data programmed using
+the "DFF" bit in the "SPI_CR1" register. The selected data frame format is applicable for
+transmission and/or reception.
 
-::::::::::::::::::::::::::::PRZEBIEG POCZATKOWY::::::::::::::::::::::::::::::
-1. MakeFile kompiluje pliki wskazane od MakeFile.m
-2. Uruchamiany jest startup_stm32f103xb.c (przedtem byl w asseblerze)
-    a) uruchamiane jest pierwsze przerwanei z wektora tablic: Reset_Handler_C()
-3. Reset_Handler_C: 
-    a) tam inicjowane sa segmeny danych (data, bss, sbss itp.)
-    b) SystmeInit(); (z system_stm32f1xx.c)
-        - ustawnia clockow (dorzucone kilka zminnych w my_stm32f103xx.h)
-    c) __libc_init_arrau(); inijowanie wektora przerwan: 
-    c) wywalnie funkcji main (chociaz nie wiem skad)
+Configuring the SPI in master mode
+In the master configuration, the serial clock is generated on the SCK pin.
+    Procedure
+1. Select the "BR[2:0]" bits to define the serial clock baud rate (see "SPI_CR1" register).
+2. Select the "CPOL and CPHA" bits to define one of the four relationships between the
+data transfer and the serial clock (see Figure 238).
+3. Set the "DFF" bit to define 8- or 16-bit data frame format
+4. Configure the "LSBFIRST" bit in the "SPI_CR1" register to define the frame format.
+5. If the NSS pin is required in input mode, in hardware mode, connect the NSS pin to a
+high-level signal during the complete byte transmit sequence. In NSS software mode,
+set the "SSM and SSI" bits in the "SPI_CR1" register. If the NSS pin is required in output
+mode, the SSOE bit only should be set.
+6. The MSTR and SPE bits must be set (they remain set only if the NSS pin is connected
+to a high-level signal).
+    Transmit sequence
+The transmit sequence begins when a byte is written in the Tx Buffer.
+The data byte is parallel-loaded into the shift register (from the internal bus) during the first
+bit transmission and then shifted out serially to the MOSI pin MSB first or LSB first
+depending on the LSBFIRST bit in the SPI_CR1 register. The TXE flag is set on the transfer
+of data from the Tx Buffer to the shift register and an interrupt is generated if the TXEIE bit in
+the SPI_CR2 register is set.
+    Receive sequence
+For the receiver, when data transfer is complete:
+● The data in the shift register is transferred to the RX Buffer and the RXNE flag is set
+● An interrupt is generated if the RXNEIE bit is set in the SPI_CR2 register
+At the last sampling clock edge the RXNE bit is set, a copy of the data byte received in the
+shift register is moved to the Rx buffer. When the SPI_DR register is read, the SPI
+peripheral returns this buffered value.
+Clearing the RXNE bit is performed by reading the SPI_DR register.
+A continuous transmit stream can be maintained if the next data to be transmitted is put in
+the Tx buffer once the transmission is started. Note that TXE flag should be ‘1 before any
+attempt to write the Tx buffer is made.
+Note: When a master is communicating with SPI slaves which need to be de-selected between
+transmissions, the NSS pin must be configured as GPIO or another GPIO must be used and
+toggled by software.
 
-
+Configuring the SPI in slave mode
+In the slave configuration, the serial clock is received on the SCK pin from the master
+device. The value set in the BR[2:0] bits in the SPI_CR1 register, does not affect the data
+transfer rate.
+Note: It is recommended to enable the SPI slave before the master sends the clock. If not,
+undesired data transmission might occur. The data register of the slave needs to be ready
+before the first edge of the communication clock or before the end of the ongoing
+communication. It is mandatory to have the polarity of the communication clock set to the
+steady state value before the slave and the master are enabled.
+Follow the procedure below to configure the SPI in slave mode:
+    Procedure
+1. Set the DFF bit to define 8- or 16-bit data frame format
+2. Select the CPOL and CPHA bits to define one of the four relationships between the
+data transfer and the serial clock (see Figure 238). For correct data transfer, the CPOL
+and CPHA bits must be configured in the same way in the slave device and the master
+device.
+3. The frame format (MSB-first or LSB-first depending on the value of the LSBFIRST bit in
+the SPI_CR1 register) must be the same as the master device.
+4. In Hardware mode (refer to Slave select (NSS) pin management on page 676), the
+NSS pin must be connected to a low level signal during the complete byte transmit
+sequence. In NSS software mode, set the SSM bit and clear the SSI bit in the SPI_CR1
+register.
+5. Clear the MSTR bit and set the SPE bit (both in the SPI_CR1 register) to assign the
+pins to alternate functions.
+In this configuration the MOSI pin is a data input and the MISO pin is a data output.
+    Transmit sequence
+The data byte is parallel-loaded into the Tx buffer during a write cycle.
+The transmit sequence begins when the slave device receives the clock signal and the most
+significant bit of the data on its MOSI pin. The remaining bits (the 7 bits in 8-bit data frame
+format, and the 15 bits in 16-bit data frame format) are loaded into the shift-register. The
+TXE flag in the SPI_SR register is set on the transfer of data from the Tx Buffer to the shift
+register and an interrupt is generated if the TXEIE bit in the SPI_CR2 register is set.
+    Receive sequence
+For the receiver, when data transfer is complete:
+● The Data in shift register is transferred to Rx Buffer and the RXNE flag (SPI_SR
+register) is set
+● An Interrupt is generated if the RXNEIE bit is set in the SPI_CR2 register.
+After the last sampling clock edge the RXNE bit is set, a copy of the data byte received in
+the shift register is moved to the Rx buffer. When the SPI_DR register is read, the SPI
+peripheral returns this buffered value.
+Clearing of the RXNE bit is performed by reading the SPI_DR register.
