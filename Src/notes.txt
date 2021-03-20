@@ -108,3 +108,17 @@ Refer to Table 20: Port bit configuration table on page 156.
     10: Output mode, max speed 2 MHz.
     11: Output mode, max speed 50 MHz.
 */
+
+
+::::::::::::::::::::::::::::PRZEBIEG POCZATKOWY::::::::::::::::::::::::::::::
+1. MakeFile kompiluje pliki wskazane od MakeFile.m
+2. Uruchamiany jest startup_stm32f103xb.c (przedtem byl w asseblerze)
+    a) uruchamiane jest pierwsze przerwanei z wektora tablic: Reset_Handler_C()
+3. Reset_Handler_C: 
+    a) tam inicjowane sa segmeny danych (data, bss, sbss itp.)
+    b) SystmeInit(); (z system_stm32f1xx.c)
+        - ustawnia clockow (dorzucone kilka zminnych w my_stm32f103xx.h)
+    c) __libc_init_arrau(); inijowanie wektora przerwan: 
+    c) wywalnie funkcji main (chociaz nie wiem skad)
+
+
