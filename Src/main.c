@@ -44,11 +44,13 @@ int main(void)
 {
 	gpio_configure(GPIOA,5,OUTPUT_GPIO_PUPD_10MHZ);
 	gpio_configure(GPIOC,13,INPUT_PUPD);
+	// gpio_set_output(GPIOA,5,GPIO_PIN_SET);
+	gpio_set_interrupt(GPIOC,13,INT_RISING);
 
 	for(;;){
 
-		if(MIGACZ){			blinking();
-		} else	{			primitive_interrupt();		}
+		// if(MIGACZ){			blinking();
+		// } else	{			primitive_interrupt();		}
 	}
 
 	return 0;
@@ -80,4 +82,15 @@ void primitive_interrupt(void){
 	} else if(value==1) {
 		gpio_set_output(GPIOA,5,GPIO_PIN_RESET);
 	}
+}
+
+void EXTI15_10_IRQHandler(){
+	int value = gpio_read_input(GPIOC,13);
+	if (value==0){
+		gpio_set_output(GPIOA,5,GPIO_PIN_SET);
+	} else if(value==1) {
+		gpio_set_output(GPIOA,5,GPIO_PIN_RESET);
+	}
+	delay(10000);
+
 }

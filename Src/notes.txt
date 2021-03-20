@@ -50,19 +50,7 @@ Falling trigger selection register (EXTI_FTSR)
     1: Falling trigger enabled (for Event and Interrupt) for input line.
 NVIC:
 The base address of the main NVIC register block is 0xE000E100. The NVIC_STIR register is located in a separate block at 0xE000EF00.
-
-
-        z KIRANA
-		//2. configure the GPIO port selection in SYSCFG_EXTICR
-		uint8_t temp1 = pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber / 4 ;
-		uint8_t temp2 = pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber % 4;
-		uint8_t portcode = GPIO_BASEADDR_TO_CODE(pGPIOHandle->pGPIOx);
-		SYSCFG_PCLK_EN();
-		SYSCFG->EXTICR[temp1] = portcode << ( temp2 * 4);
-
-		//3 . enable the exti interrupt delivery using IMR
-		EXTI->IMR |= 1 << pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber;
-
+//TODO: 20.03.2021: UZUPELNIJ
 
 Hardware interrupt selection
 To configure the 20 lines as interrupt sources, use the following procedure:

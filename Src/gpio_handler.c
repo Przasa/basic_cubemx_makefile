@@ -4,12 +4,12 @@
 
 
 
-void _startclock(GPIO_RegDef_t *PORT);
 void gpio_clear_pr(int PIN_NR);
+void _startclock(GPIO_RegDef_t *PORT);
 int _portToDec(GPIO_RegDef_t *PORT);
 
 void _set_interrupt_afio(GPIO_RegDef_t *port,int PIN_NR);
-void _set_interrupt_exti(int PIN_NR);
+void _set_interrupt_exti(int PIN_NR,INTERRUPT_TYPES int_type);
 void _set_interrupt_nvic(int interrupt_position, int interrupt_priority);
 
 void gpio_configure( GPIO_RegDef_t *PORT, int PIN_NR, GPIO_CONFIGURATION gpio_conf){
@@ -45,11 +45,6 @@ int gpio_read_input(GPIO_RegDef_t *port, int PIN_NR){
     return value;
 }
 
-//TODO 19.03.2021: seel to my_stm32xxx.h
-typedef enum{
-    RISING,FALLING,RISING_FALLING
-} INTERRUPT_TYPES;
-
 void gpio_set_interrupt(GPIO_RegDef_t *port, int PIN_NR, INTERRUPT_TYPES itype){
 
     //TODO: pamietaj o zwlaczzeniu clockow do peryferiow.
@@ -67,7 +62,7 @@ void gpio_set_interrupt(GPIO_RegDef_t *port, int PIN_NR, INTERRUPT_TYPES itype){
     else if(PIN_NR<=15) {{interrupt_position=EXTI_10to15_POSITION;interrupt_priority=EXTI_10to15_PRIORITY;}}
 
     _set_interrupt_afio(port,PIN_NR);
-    _set_interrupt_exti(PIN_NR);
+    _set_interrupt_exti(PIN_NR,itype);
     _set_interrupt_nvic(interrupt_position, interrupt_priority);
     
     //TODO 19.03.2021: obluga tablicy  przerwan, clearowanie tablicy
@@ -79,6 +74,7 @@ void gpio_clear_pr(int PIN_NR){
 }
 //::::::::::::::::::::::::::::  PRIVATES    :::::::::::::::::::::::::::::::::://
 void _startclock(GPIO_RegDef_t *PORT){
+    //TODO: 20.03.2021: oddac to dla my_stm32f103xx.h
     if(PORT==GPIOA){
         GPIOA_PCLK_EN();
     }
@@ -117,6 +113,8 @@ int _portToDec(GPIO_RegDef_t *PORT){
 void _set_interrupt_afio(GPIO_RegDef_t *port,int PIN_NR){
     // a) AFIO_EXTICRx         -> przypisania interrupta do gpio
 
+    if(!AFIO_PCLK_GET()){AFIO_PCLK_EN();}
+
     volatile uint32_t *afio_configure;
     int reg_offset = PIN_NR % 4;
     int port_nr = _portToDec(port);
@@ -133,12 +131,28 @@ void _set_interrupt_afio(GPIO_RegDef_t *port,int PIN_NR){
     *afio_configure &= ~(15<< reg_offset);
     *afio_configure |= (port_nr << reg_offset);
 }
-void _set_interrupt_exti(int PIN_NR){
+void _set_interrupt_exti(int PIN_NR,INTERRUPT_TYPES int_type){
     // b) EXTI_IMR             -> ktora linia interrupt
     EXTI->EXTI_IMR |= (1<< PIN_NR);
     // c) EXTI_RTSR EXTI_FTSR  -> typ zbocza interrupt
-    EXTI->EXTI_RTSR |= (1 << PIN_NR);
-    // EXTI->EXTI_FTSR |= (1 << PIN_NR);
+    switch (int_type)
+    {
+        case INT_RISING:
+            EXTI->EXTI_RTSR |= (1<< PIN_NR);
+            EXTI->EXTI_FTSR &= ~(1 << PIN_NR);
+            break;
+        case INT_FALLING:
+            EXTI->EXTI_FTSR |= (1 << PIN_NR);
+            EXTI->EXTI_RTSR &= ~(1 << PIN_NR);
+            break;
+        case INT_RISING_FALLING:
+            EXTI->EXTI_RTSR |= (1<< PIN_NR);
+            EXTI->EXTI_FTSR |= (1 << PIN_NR);
+        default:
+            EXTI->EXTI_RTSR &= ~(1 << PIN_NR);
+            EXTI->EXTI_FTSR &= ~(1 << PIN_NR);
+            break;
+    }
 }
 
 void _set_interrupt_nvic(int interrupt_line, int interrupt_priority){

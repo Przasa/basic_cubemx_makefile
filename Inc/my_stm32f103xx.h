@@ -195,15 +195,29 @@ typedef struct
 
 /********************  MACROS  ************************************************/
 /*
- * Clock Enable Macros for GPIOx peripherals
+ * Clock Enable/Disable/Read Macros for GPIOx peripherals
  */
 #define GPIOA_PCLK_EN()   (RCC->APB2ENR |= (1 << 2))
 #define GPIOB_PCLK_EN()		(RCC->APB2ENR |= (1 << 3))
 #define GPIOC_PCLK_EN()		(RCC->APB2ENR |= (1 << 4))
 #define GPIOD_PCLK_EN()		(RCC->APB2ENR |= (1 << 5))
 #define GPIOE_PCLK_EN()		(RCC->APB2ENR |= (1 << 6))
-
 #define AFIO_PCLK_EN()		(RCC->APB2ENR |= (1 << 0))
+
+#define GPIOA_PCLK_DI()   (RCC->APB2ENR &= ~(1 << 2))
+#define GPIOB_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 3))
+#define GPIOC_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 4))
+#define GPIOD_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 5))
+#define GPIOE_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 6))
+#define AFIO_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 0))
+
+#define GPIOA_PCLK_GET()  (RCC->APB2ENR &= (1 << 2) >> 2)
+#define GPIOB_PCLK_GET()	(RCC->APB2ENR &= (1 << 3) >> 3)
+#define GPIOC_PCLK_GET()	(RCC->APB2ENR &= (1 << 4) >> 4)
+#define GPIOD_PCLK_GET()	(RCC->APB2ENR &= (1 << 5) >> 5)
+#define GPIOE_PCLK_GET()	(RCC->APB2ENR &= (1 << 6) >> 6)
+#define AFIO_PCLK_GET()	  (RCC->APB2ENR &= (1 << 0) >> 0)
+
 
 
 /******************** ADDITIONAL VALUES  **************************************/

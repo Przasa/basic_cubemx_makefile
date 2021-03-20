@@ -36,10 +36,15 @@ typedef enum {
     OUTPUT_ALT_ODRAIN_10MHZ=0b1101,OUTPUT_ALT_ODRAIN_2MHZ=0b1110,OUTPUT_ALT_ODRAIN_50MHZ=0b1111
 }GPIO_CONFIGURATION;
 
+typedef enum{
+    INT_RISING,INT_FALLING,INT_RISING_FALLING
+} INTERRUPT_TYPES;
+
+
 void gpio_configure( GPIO_RegDef_t *PORT, int PIN_NR, GPIO_CONFIGURATION gpio_conf);
 void gpio_set_output(GPIO_RegDef_t *port, int PIN_NR, int value);
 int  gpio_read_input(GPIO_RegDef_t *port, int PIN_NR);
-
+void gpio_set_interrupt(GPIO_RegDef_t *port, int PIN_NR, INTERRUPT_TYPES itype);
 
 #endif  // GPIOHANDLER_H
 
