@@ -36,7 +36,8 @@ void  __attribute__((optimize("O0"))) delay(uint32_t value);
 
 int main(void)
 {
-	gpio_configure(GPIOA,5,OUTPUT_GPIO_PUPD_10MHZ);
+	//TODO 22.03.2021: Parametry gpio sa malo intuicyjne
+	gpio_configure(GPIOA,5,OUTPUT_GPIO_PUSHPULL_10MHZ);
 	gpio_configure(GPIOC,13,INPUT_PUPD);
 	gpio_set_interrupt(GPIOC,13,INT_RISING);
 

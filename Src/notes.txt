@@ -187,7 +187,7 @@ Slave select (NSS) pin management
 Hardware or software slave select management can be set using the SSM bit in the
 SPI_CR1 register.
 ● Software NSS management (SSM = 1)
-    The slave select information is "driven internally" by the value of the SSI bit in the
+    The slave select information is "driven internally" by the value of the "SSI" bit in the
     "SPI_CR1" register. The "external NSS pin remains free for other application uses."
 ● Hardware NSS management (SSM = 0)
     Two configurations are possible depending on the NSS output configuration ("SSOE" bit
@@ -200,6 +200,8 @@ SPI_CR1 register.
         This configuration allows "multimaster capability" for devices operating in master
         mode. For devices set as slave, the NSS pin acts as a classical NSS input: the
         slave is selected when NSS is low and deselected when NSS high.
+"my comment:" master uzywa GPIOsow do ustawiania NSS na slavach. Moze jednak uzywac wlasnego pinu NSS, ("SSOE=1"), aby uzyc go jak kolejne wyjscie GPIO i np zaznaczyc slave'a. (chyba to sie robi automatycznie wtedy)
+
 
 Clock phase and clock polarity
 Four possible timing relationships may be chosen by software, using the "CPOL and CPHA"

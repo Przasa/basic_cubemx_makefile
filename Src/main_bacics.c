@@ -41,7 +41,7 @@ const int MIGACZ =0;
 
 int main(void)
 {
-	gpio_configure(GPIOA,5,OUTPUT_GPIO_PUPD_10MHZ);
+	gpio_configure(GPIOA,5,OUTPUT_GPIO_PUSHPULL_10MHZ);
 	gpio_configure(GPIOC,13,INPUT_PUPD);
 
 	for(;;){

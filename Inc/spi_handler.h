@@ -16,10 +16,20 @@ typedef enum{
     HARDWARE,SOFTWARE
 }SPI_NSS_TYPE;
 
+typedef enum{
+    MULTISLAVE,POINT_TO_POINT
+}SPI_SLAVES_CONN;
+
+typedef enum{
+    DEFAULT,REMAPPED
+}SPI_REMAP;
+
 typedef struct{
     SPI_MODE MODE;
     SPI_SIDE SIDE;
     SPI_NSS_TYPE NSS_TYPE;
+    SPI_SLAVES_CONN SLAVE_CONN;
+    SPI_REMAP REMAP;
 }SPI_CONF;
 
 
