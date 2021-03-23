@@ -32,5 +32,11 @@ typedef struct{
     SPI_REMAP REMAP;
 }SPI_CONF;
 
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//advanced: TODO: 23.02.2021
+typedef struct{
+    
+}ADV_CONF;
+    
 
 #endif

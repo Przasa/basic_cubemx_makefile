@@ -6,88 +6,111 @@
 const GPIO_RegDef_t* SPI_GPIO_PORT =GPIOA;
 const int  NSS_PIN=4; SCK_PIN=5; MISO_PIN=6; MOSI_PIN=7;
 
+//TODO 23.03.2021: Use it somehow.
+const DEF_CPOL = 0; DEF_CPHA=1;DEF_DFF=0;DEF_LSBFIRST=1;DEF_BRATE=0; DEF_SSOE=1;
+
 typedef enum{
     RECEIVE,TRANSMIT
 }BIDI_DIRECTION;
 
 
+void _set_defaults(SPI_CONF CONF);
 void _conf_afio(SPI_CONF CONF);
 void _conf_gpios(SPI_CONF CONF);
 void _switch_bidi(BIDI_DIRECTION direction);
+
+void configure_spi(SPI_CONF CONF);
+void configure_spi_adv(SPI_CONF CONF, ADV_CONF ADC_CONF);
+
+void set_soft_slave(int select){
+    if(select==0){
+        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SSI);    
+    } else if(select==1){
+        SPI->CR1 |=  (1<<SPI_BITPOS_CR1_SSI);    
+    }
+}
+
+void enable_spi(int ENORDI){
+    if(ENORDI==0){
+        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SPE);    //SPI di
+    }else{
+        SPI->CR1 |=  (1<<SPI_BITPOS_CR1_SPE);    //SPI en
+    }
+}
+
+void configure_spi_adv(SPI_CONF CONF, ADV_CONF ADC_CONF){
+    //ustawianie defaultow. TODO: 23.02.2021
+    configure_spi(CONF);
+}
+
 void configure_spi(SPI_CONF CONF){
     
 
+    _set_defaults(CONF);
     _conf_afio(CONF);
     _conf_gpios(CONF);
 
 
-    //TODO 22.03.2021 wydzielic gdzies te wszystki rejestry CR1 i CR2
-    //TODO 20.03.2021 te miejsc powinny byc czytalne.
     //TODO 20.03.2021 jakies makro na set i reset bitu?
-    SPI->CR1 &= ~(1<<0);    //cpol
-    SPI->CR1 |=  (1<<1);    //cpha
-    SPI->CR1 |= ~(1<<16);   //DFF
-    SPI->CR1 |=  (1<<7);    //LSBFFIRT =1
-    SPI->CR1 &= ~(2<<2);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
+    
+    if(CONF.SIDE==MASTER){
+        SPI->CR1 |=  (1<<SPI_BITPOS_CR1_MSTR);    //as MASTER
+    } else if(CONF.SIDE==SLAVE){
+        SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_MSTR);    //as SLAVE
+    }
+
+    if(CONF.NSS_TYPE==SOFTWARE && CONF.SIDE==SLAVE){
+        SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_SSM);    //SSM   
+    }
 
     switch (CONF.MODE)
     {
         case FULL_DUPLEX:
-            SPI->CR1 &= ~(1<<15);   //BIDIMODE
-            SPI->CR1 &= ~(1<<10);   //RXONLY
+            SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIMODE);   //BIDIMODE
+            SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_RXONLY);   //RXONLY
             break;
         case SIMPLEX_BIDI:
-            SPI->CR1 |=  (1<<15);   //BIDIMODE
-            SPI->CR1 &= ~(1<<10);   //RXONLY    //moze niekonieczne
+            SPI->CR1 |=  (1<<SPI_BITPOS_CR1_BIDIMODE);   //BIDIMODE
+            SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_RXONLY);   //RXONLY    //moze niekonieczne
             break;
         case SIMPLEX_RECEIVE:
-            SPI->CR1 &=  ~(1<<15);   //BIDIMODE
-            SPI->CR1 |=  ~(1<<10);   //RXONLY
+            SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_BIDIMODE);   //BIDIMODE
+            SPI->CR1 |=  ~(1<<SPI_BITPOS_CR1_RXONLY);   //RXONLY
             break;
         case SIMPLEX_TRANSIM:
-            SPI->CR1 &= ~(1<<15);   //BIDIMODE
-            SPI->CR1 &= ~(1<<10);   //RXONLY
+            SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIMODE);   //BIDIMODE
+            SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_RXONLY);   //RXONLY
             break;
         default:
             break;
     }
 
-
-    if(CONF.SIDE==MASTER){
-        SPI->CR1 |=  (1<<2);    //master
-        SPI->CR1 &= ~(1<<8);    //SSI (not relevant when SSM active)
-    } else
-    {
-        SPI->CR1 &=  ~(1<<2);    //master
-        SPI->CR1 |= ~(1<<8);    //SSI (not relevant when SSM active)
+    //tylko gdy master hardwerowo zarzadza 1 slavem, moze wyorzystac swoje NSS'a jako wyjscie do selecta.
+    SPI->CR2 = ~(1<<2); // NSS pin as input 
+    if(CONF.SIDE==MASTER && CONF.SIDE==HARDWARE && CONF.SLAVE_CONN==POINT_TO_POINT || DEF_SSOE==1){ 
+        SPI->CR2 |= (1<<SPI_BITPOS_CR2_SSOE); //SSOE: master's NSS pin as output -> automatically selecting the slave
     }
-    
-
-    if(CONF.NSS_TYPE==HARDWARE){
-        if(CONF.SIDE==MASTER && CONF.SLAVE_CONN==POINT_TO_POINT) {
-            SPI->CR1 &=  ~(1<<9);    //SSM   
-            SPI->CR1 &=  ~(1<<8);    //SSM  
-            SPI->CR2 |=   (1<<2);    //SSOE (NSS)
-        } else if(CONF.SIDE==MASTER && CONF.SLAVE_CONN==MULTISLAVE){
-            SPI->CR1 &=  ~(1<<9);    //SSM   
-            SPI->CR1 &=  ~(1<<8);    //SSM  
-            SPI->CR2 &= ~(1<<2);    //SSOE (multimaster en)
-        }
-        //TODO 22.03.2021 pozostale przypadki...
-    }
-    
-    //TODO: 22.03.2021: tego nie powinno tutaj byc. dopiero przy poczatku/koncu komunikacji.
-    SPI->CR1 |=  (1<<6);    //SPI en
     
 }
+void _set_defaults(SPI_CONF CONF){
+    //troszke zrob to pewniej (najpierw wyzeruj)
+    SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_CPOL);    //cpol
+    SPI->CR1 |=  (1<<SPI_BITPOS_CR1_CPHA);    //cpha
+    SPI->CR1 |= ~(1<<SPI_BITPOS_CR1_DFF);   //DFF
+    SPI->CR1 |=  (1<<SPI_BITPOS_CR1_LSBF);    //LSBFFIRT =1
+    SPI->CR1 &= ~(2<<SPI_BITPOS_CR1_BR);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
+    
+}
+
 
 void _select_slave(){
     //TODO 22.03.2021: albo przez NSS, albo przez GPIO!
 }
 
 void _switch_bidi(BIDI_DIRECTION DIR){
-    if(DIR==RECEIVE){       SPI->CR1 &= ~(1<<14);    }
-    else if(DIR==TRANSMIT){ SPI->CR1 |=  (1<<14);    }
+    //todo 23.03.2021: spprwdz czy bidi smiga.
+    if(DIR==RECEIVE){       SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIOE);    }
+    else if(DIR==TRANSMIT){ SPI->CR1 |=  (1<<SPI_BITPOS_CR1_BIDIOE);    }
     
 }
 
@@ -131,7 +154,7 @@ void _conf_gpios(SPI_CONF SPICONF){
         }
     }
 
-    //NSS PIN
+    //NSS PIN (w slave nie uzywasz)
     if(SPICONF.NSS_TYPE==HARDWARE){
         if(SPICONF.SIDE==MASTER){ gpio_configure(GPIOA,4,OUTPUT_ALT_PUSHPULL_10MHZ);}
         else if(SPICONF.SIDE==SLAVE){ gpio_configure(GPIOA,4,INPUT_PUPD);}

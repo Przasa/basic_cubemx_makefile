@@ -200,8 +200,8 @@ SPI_CR1 register.
         This configuration allows "multimaster capability" for devices operating in master
         mode. For devices set as slave, the NSS pin acts as a classical NSS input: the
         slave is selected when NSS is low and deselected when NSS high.
-"my comment:" master uzywa GPIOsow do ustawiania NSS na slavach. Moze jednak uzywac wlasnego pinu NSS, ("SSOE=1"), aby uzyc go jak kolejne wyjscie GPIO i np zaznaczyc slave'a. (chyba to sie robi automatycznie wtedy)
-
+"my comment:"  master uzywa GPIOsow do ustawiania NSS na slavach. Moze jednak uzywac wlasnego pinu NSS , ("SSOE=1"), aby uzyc go jak kolejne wyjscie (a la GPIO) i np zaznaczyc slave'a.
+"my comment2:" dla mastera pin GPIO moze byc ustawiony jako wejscie (SSOE=0) lub jako wyjscie (SSOE=1). Gdy uzywany jako wejscie, PIN jest automatycznie podciagniety do zasialnia, a slav'y zarzadzane sa softerowo. Gdy jako wyjscie, master pinem NSS zaznacza NSSa slav'e (i ustawia zbocza automatycznie na czas komunikacji)
 
 Clock phase and clock polarity
 Four possible timing relationships may be chosen by software, using the "CPOL and CPHA"
@@ -243,7 +243,7 @@ In the master configuration, the serial clock is generated on the SCK pin.
 data transfer and the serial clock (see Figure 238).
 3. Set the "DFF" bit to define 8- or 16-bit data frame format
 4. Configure the "LSBFIRST" bit in the "SPI_CR1" register to define the frame format.
-5. If the NSS pin is required in input mode, in hardware mode, connect the NSS pin to a
+5. If the NSS pin is required in input mode, in hardware mode ("multimaster?"), connect the NSS pin to a
 high-level signal during the complete byte transmit sequence. In NSS software mode,
 set the "SSM and SSI" bits in the "SPI_CR1" register. If the NSS pin is required in output
 mode, the SSOE bit only should be set.
@@ -349,7 +349,7 @@ A read access of the SPI_DR register returns the Rx buffered value whereas a wri
 to the SPI_DR stores the written data into the Tx buffer.
     Start sequence in master mode
 ● In full-duplex ("BIDIMODE=0 and RXONLY=0")
-    – The sequence begins when data are written into the "SPI_DR" register (Tx buffer).
+    – The sequence begins "when data are written into the SPI_DR" register (Tx buffer).
     – The data are then parallel loaded from the Tx buffer into the 8-bit shift register
       during the first bit transmission and then shifted out serially to the MOSI pin.
     – At the same time, the received data on the MISO pin is shifted in serially to the 8-
