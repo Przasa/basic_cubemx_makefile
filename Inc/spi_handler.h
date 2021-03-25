@@ -3,7 +3,7 @@
 
 #include "my_stm32f103xx.h"
 
-
+// TODO 20.03.2021: zrob podobna konktrukcje jak przy SPI_COMM_PARAMS
 typedef enum{
     FULL_DUPLEX,SIMPLEX_BIDI,SIMPLEX_RECEIVE,SIMPLEX_TRANSIM
 }SPI_MODE;
@@ -33,10 +33,34 @@ typedef struct{
 }SPI_CONF;
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//advanced: TODO: 23.02.2021
+typedef enum
+{
+    DFF_8=0,DFF_16=1
+}SPI_DFF;
+typedef enum
+{
+    CPHA_FIRST=0,CPHA_SECOND=1
+}SPI_CPHA;
+typedef enum
+{
+    CPOL_LOW=0,CPOL_HIGH=1
+}SPI_CPOL;
+typedef enum
+{
+    BR_DIV2=0,BR_DIV4=1,BR_DIV8=2,BR_DIV16=3,BR_DIV32=4,BR_DIV64=5,BR_DIV128=6,BR_DIV256=7
+}SPI_BR;
+typedef enum
+{
+    LSBF_MSB=0,LSBF_LSB=1
+}SPI_LSBF;
+
 typedef struct{
-    
-}ADV_CONF;
+    SPI_DFF     DFF;
+    SPI_CPHA    CPHA;
+    SPI_CPOL    CPOL;
+    SPI_BR      BR;
+    SPI_LSBF    LSBF;
+}SPI_COMM_PARAMS;
     
 
 #endif

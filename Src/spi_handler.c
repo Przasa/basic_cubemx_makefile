@@ -8,45 +8,45 @@ const int  NSS_PIN=4; SCK_PIN=5; MISO_PIN=6; MOSI_PIN=7;
 
 //TODO 23.03.2021: Use it somehow.
 const DEF_CPOL = 0; DEF_CPHA=1;DEF_DFF=0;DEF_LSBFIRST=1;DEF_BRATE=0; DEF_SSOE=1;
+SPI_COMM_PARAMS COMM_PARAMS_DEF={
+    DFF_8,
+    CPHA_SECOND,
+    CPOL_HIGH,
+    BR_DIV32,
+    LSBF_MSB
+};
+
+
 
 typedef enum{
     RECEIVE,TRANSMIT
 }BIDI_DIRECTION;
 
+void configure_spi(SPI_CONF CONF);
+void configure_spi_adv(SPI_CONF CONF, SPI_COMM_PARAMS ADC_CONF);
+void set_soft_slave(int select);
+void enable_spi(int ENORDI);
+void sendByte(uint8_t byte);
+int receiveByte();
 
-void _set_defaults(SPI_CONF CONF);
 void _conf_afio(SPI_CONF CONF);
 void _conf_gpios(SPI_CONF CONF);
 void _switch_bidi(BIDI_DIRECTION direction);
+void _set_comm_parameters(SPI_COMM_PARAMS CONF);
 
-void configure_spi(SPI_CONF CONF);
-void configure_spi_adv(SPI_CONF CONF, ADV_CONF ADC_CONF);
 
-void set_soft_slave(int select){
-    if(select==0){
-        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SSI);    
-    } else if(select==1){
-        SPI->CR1 |=  (1<<SPI_BITPOS_CR1_SSI);    
-    }
-}
 
-void enable_spi(int ENORDI){
-    if(ENORDI==0){
-        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SPE);    //SPI di
-    }else{
-        SPI->CR1 |=  (1<<SPI_BITPOS_CR1_SPE);    //SPI en
-    }
-}
 
-void configure_spi_adv(SPI_CONF CONF, ADV_CONF ADC_CONF){
+void configure_spi_adv(SPI_CONF CONF, SPI_COMM_PARAMS COMM_PARAMS){
     //ustawianie defaultow. TODO: 23.02.2021
+    configure_adv(COMM_PARAMS);
     configure_spi(CONF);
 }
 
 void configure_spi(SPI_CONF CONF){
     
 
-    _set_defaults(CONF);
+    _set_comm_parameters(COMM_PARAMS_DEF);
     _conf_afio(CONF);
     _conf_gpios(CONF);
 
@@ -92,13 +92,51 @@ void configure_spi(SPI_CONF CONF){
     }
     
 }
-void _set_defaults(SPI_CONF CONF){
-    //troszke zrob to pewniej (najpierw wyzeruj)
-    SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_CPOL);    //cpol
-    SPI->CR1 |=  (1<<SPI_BITPOS_CR1_CPHA);    //cpha
-    SPI->CR1 |= ~(1<<SPI_BITPOS_CR1_DFF);   //DFF
-    SPI->CR1 |=  (1<<SPI_BITPOS_CR1_LSBF);    //LSBFFIRT =1
-    SPI->CR1 &= ~(2<<SPI_BITPOS_CR1_BR);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
+
+void set_soft_slave(int select){
+
+    if(select==0){
+        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SSI);    
+    } else if(select==1){
+        SPI->CR1 |=  (1<<SPI_BITPOS_CR1_SSI);    
+    }
+}
+
+void enable_spi(int ENORDI){
+    if(ENORDI==0){
+        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SPE);    //SPI di
+    }else{
+        SPI->CR1 |=  (1<<SPI_BITPOS_CR1_SPE);    //SPI en
+    }
+}
+
+void sendByte(uint8_t byte){
+    //BSY FLAG?
+    while((SPI->SR & (1 << SPI_BITPOS_SR_TXE))!=0){};
+    SPI->DR |= byte;
+
+
+}
+int receiveByte(){
+    while((SPI->SR & (1 << SPI_BITPOS_SR_RXNE))!=0){};
+    return (SPI->DR & 255);
+}
+
+
+//:::::::::::::::::::::PRIVATE_HELPERS::::::::::::::::::::::::::::::::::
+void _set_comm_parameters(SPI_COMM_PARAMS CONF){
+    
+    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_CPOL);    //cpol
+    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_CPHA);    //cpha
+    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_DFF);   //DFF
+    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_LSBF);    //LSBFFIRT =1
+    SPI->CR1 &=  ~(7<<SPI_BITPOS_CR1_BR);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
+
+    SPI->CR1 |=  (CONF.CPOL<<SPI_BITPOS_CR1_CPOL);    //cpol
+    SPI->CR1 |=  (CONF.CPHA<<SPI_BITPOS_CR1_CPHA);    //cpha
+    SPI->CR1 |=  (CONF.DFF<<SPI_BITPOS_CR1_DFF);   //DFF
+    SPI->CR1 |=  (CONF.LSBF<<SPI_BITPOS_CR1_LSBF);    //LSBFFIRT =1
+    SPI->CR1 |=  (CONF.BR<<SPI_BITPOS_CR1_BR);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
     
 }
 

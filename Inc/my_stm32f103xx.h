@@ -321,7 +321,14 @@ typedef struct
 #define SPI_BITPOS_CR1_CRCEN    13    
 #define SPI_BITPOS_CR1_BIDIOE   14    
 #define SPI_BITPOS_CR1_BIDIMODE 15    
+
 #define SPI_BITPOS_CR2_SSOE     2    
+
+#define SPI_BITPOS_SR_TXE       0    
+#define SPI_BITPOS_SR_RXNE      1    
+#define SPI_BITPOS_SR_MODF      5    
+#define SPI_BITPOS_SR_OVR       6    
+#define SPI_BITPOS_SR_BSY       7    
 
 //****************************GENERAL*********************************************/
 #define ENABLE 				1
