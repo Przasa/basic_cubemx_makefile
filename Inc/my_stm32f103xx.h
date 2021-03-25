@@ -228,7 +228,9 @@ typedef struct
 #define GPIOD_PCLK_EN()		(RCC->APB2ENR |= (1 << 5))
 #define GPIOE_PCLK_EN()		(RCC->APB2ENR |= (1 << 6))
 #define AFIO_PCLK_EN()		(RCC->APB2ENR |= (1 << 0))
-#define SPI_PCLK_EN() 		(RCC->APB2ENR |= (1 << 12))
+#define SPI1_PCLK_EN() 		(RCC->APB2ENR |= (1 << 12))
+#define SPI2_PCLK_EN() 		(RCC->APB1ENR |= (1 << 14))
+#define SPI3_PCLK_EN() 		(RCC->APB1ENR |= (1 << 15))
 
 #define GPIOA_PCLK_DI()   (RCC->APB2ENR &= ~(1 << 2))
 #define GPIOB_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 3))
@@ -236,7 +238,9 @@ typedef struct
 #define GPIOD_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 5))
 #define GPIOE_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 6))
 #define AFIO_PCLK_DI()		(RCC->APB2ENR &= ~(1 << 0))
-#define SPI_PCLK_DI()		  (RCC->APB2ENR &= ~(1 << 12))
+#define SPI1_PCLK_DI()	  (RCC->APB2ENR &= ~(1 << 12))
+#define SPI2_PCLK_DI()	  (RCC->APB1ENR &= ~(1 << 14))
+#define SPI3_PCLK_DI()	  (RCC->APB1ENR &= ~(1 << 15))
 
 #define GPIOA_PCLK_GET()  ((RCC->APB2ENR & (1 << 2)) >> 2)
 #define GPIOB_PCLK_GET()	((RCC->APB2ENR & (1 << 3)) >> 3)
@@ -244,7 +248,9 @@ typedef struct
 #define GPIOD_PCLK_GET()	((RCC->APB2ENR & (1 << 5)) >> 5)
 #define GPIOE_PCLK_GET()	((RCC->APB2ENR & (1 << 6)) >> 6)
 #define AFIO_PCLK_GET()	  ((RCC->APB2ENR & (1 << 0)) >> 0)
-#define SPI_PCLK_GET()	  ((RCC->APB2ENR & (1 << 12)) >> 12)
+#define SPI1_PCLK_GET()	  ((RCC->APB2ENR & (1 << 12)) >> 12)
+#define SPI2_PCLK_GET()	  ((RCC->APB1ENR & (1 << 14)) >> 14)
+#define SPI3_PCLK_GET()	  ((RCC->APB1ENR & (1 << 15)) >> 15)
 
 
 //TODO 20.03.21:

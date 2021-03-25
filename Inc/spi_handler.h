@@ -9,17 +9,18 @@ typedef enum{
 }SPI_MODE;
 
 typedef enum{
-    MASTER,SLAVE
+    SLAVE=0,MASTER=1
 }SPI_SIDE;
 
 typedef enum{
-    HARDWARE,SOFTWARE
+    HARDWARE_GPIO,HARDWARE_NSS,SOFTWARE
 }SPI_NSS_TYPE;
 
 typedef enum{
     MULTISLAVE,POINT_TO_POINT
 }SPI_SLAVES_CONN;
 
+//todo 25.03.2021; to lepiej przenis do advancad
 typedef enum{
     DEFAULT,REMAPPED
 }SPI_REMAP;
@@ -32,7 +33,7 @@ typedef struct{
     SPI_REMAP REMAP;
 }SPI_CONF;
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//:::::::::::::::::::::::::ADVANCED CONFIG:::::::::::::::::::::::::::::::::::::
 typedef enum
 {
     DFF_8=0,DFF_16=1
@@ -54,12 +55,17 @@ typedef enum
     LSBF_MSB=0,LSBF_LSB=1
 }SPI_LSBF;
 
+typedef enum{
+    SSOE_DI=0,SSOE_EN=1
+}SPI_SSOE;
+
 typedef struct{
     SPI_DFF     DFF;
     SPI_CPHA    CPHA;
     SPI_CPOL    CPOL;
     SPI_BR      BR;
     SPI_LSBF    LSBF;
+    // SPI_SSOE    SSOE;
 }SPI_COMM_PARAMS;
     
 

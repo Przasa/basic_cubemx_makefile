@@ -160,7 +160,7 @@ SPIx_MISO:  Full duplex / master:                                       Input fl
             Simplex bidirectional data wire / master:                   Not used. Can be used as a GPIO
             Simplex bidirectional data wire/ slave (point to point):    Alternate function push-pull
             Simplex bidirectional data wire/ slave (multi-slave):       Alternate function open drain
-SPIx_NSS:   Hardware master /slave:                                     Input floating/ Input pull-up / Input pull-down
+SPIx_NSS:   Hardware master /slave:                                     Input floating/ Input pull-up / Input pull-down "comm":NSS jako input (jako master i jako slave)
             Hardware master/ NSS output enabled:                        Alternate function push-pull
             Software:                                                   Not used. Can be used as a GPIO
 
