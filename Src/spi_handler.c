@@ -83,7 +83,7 @@ void configure_spi(SPI_CONF CONF){
             SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_BIDIMODE);   
             SPI->CR1 |=  ~(1<<SPI_BITPOS_CR1_RXONLY);   
             break;
-        case SIMPLEX_TRANSIM:
+        case SIMPLEX_TRANSMIT:
             SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIMODE);  
             SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_RXONLY);   
             break;
@@ -229,7 +229,7 @@ void _conf_gpios(SPI_CONF SPICONF){
 
     // note: simplex trans i rec, programistycznie wyglada jak full-duplex. tylko fizycznie usuwasz jeden przewod.
     // MISO/MOSI pins
-    if(SPICONF.MODE==FULL_DUPLEX || SPICONF.MODE==SIMPLEX_RECEIVE || SPICONF.MODE==SIMPLEX_TRANSIM){
+    if(SPICONF.MODE==FULL_DUPLEX || SPICONF.MODE==SIMPLEX_RECEIVE || SPICONF.MODE==SIMPLEX_TRANSMIT){
         if(SPICONF.SIDE==MASTER){
             gpio_configure(GPIOA,MISO_PIN,INPUT_PUPD);                 //MISO, INPUT_FLOATING possible
             gpio_configure(GPIOA,MOSI_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);  //MOSI

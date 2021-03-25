@@ -5,7 +5,7 @@
 
 // TODO 20.03.2021: zrob podobna konktrukcje jak przy SPI_COMM_PARAMS
 typedef enum{
-    FULL_DUPLEX,SIMPLEX_BIDI,SIMPLEX_RECEIVE,SIMPLEX_TRANSIM
+    FULL_DUPLEX,SIMPLEX_BIDI,SIMPLEX_RECEIVE,SIMPLEX_TRANSMIT
 }SPI_MODE;
 
 typedef enum{
@@ -30,7 +30,7 @@ typedef struct{
     SPI_SIDE SIDE;
     SPI_NSS_TYPE NSS_TYPE;
     SPI_SLAVES_CONN SLAVE_CONN;
-    SPI_REMAP REMAP;
+    SPI_REMAP REMAP;    // to bym dal do advanced config
 }SPI_CONF;
 
 //:::::::::::::::::::::::::ADVANCED CONFIG:::::::::::::::::::::::::::::::::::::
