@@ -67,6 +67,13 @@ typedef struct{
     SPI_LSBF    LSBF;
     // SPI_SSOE    SSOE;
 }SPI_COMM_PARAMS;
-    
+
+//:::::::::::::::::::::::::PUBLIC METHODS:::::::::::::::::::::::::::::::::::::
+void configure_spi(SPI_CONF CONF);
+void configure_spi_adv(SPI_CONF CONF, SPI_COMM_PARAMS ADC_CONF);
+void enable_spi(int ENORDI);
+void send_data(uint8_t* transmit_buffer, int length);
+void receive_data(uint8_t* receive_buffer, int length);
+
 
 #endif

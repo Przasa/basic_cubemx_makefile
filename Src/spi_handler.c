@@ -2,6 +2,7 @@
 #include "gpio_handler.h"
 #include "my_stm32f103xx.h"
 
+//todo 20.03.21:    jakies makro na set i reset bitu?
 //todo 20.03.21:    uzupelnij o remap.
 //todo 25.03.21:    uzupelnij o SPI2,SPI3... (jezeli sa) (i nawet ich remap). Pewnie trzeba powiekszyc configi
 //todo 25.03.21:    uniewersalnosc pinow GPIO (np MISO_PIN ustawiany w zlaeznosci od rodzaju SPI)
@@ -33,16 +34,16 @@ typedef enum{
 
 void configure_spi(SPI_CONF CONF);
 void configure_spi_adv(SPI_CONF CONF, SPI_COMM_PARAMS ADC_CONF);
-void set_soft_slave(int select);
 void enable_spi(int ENORDI);
-void sendByte(uint8_t byte);
-int receiveByte();
+void send_data(uint8_t* transmit_buffer, int length);
+void receive_data(uint8_t* receive_buffer, int length);
 
 void _conf_afio(SPI_CONF CONF);
 void _conf_gpios(SPI_CONF CONF);
 void _switch_bidi(BIDI_DIRECTION direction);    //moze jako public?
 void _set_comm_parameters(SPI_COMM_PARAMS CONF);
 
+// void set_soft_slave(int select);
 
 
 
@@ -56,13 +57,13 @@ void configure_spi(SPI_CONF CONF){
     
     if(!SPI1_PCLK_GET()){SPI1_PCLK_EN();}
     
-    _set_comm_parameters(COMM_PARAMS_DEF);
     _conf_afio(CONF);
     _conf_gpios(CONF);
+    _set_comm_parameters(COMM_PARAMS_DEF);
+
+    //todo 25.03.2021: moze to oc ponizej tez wydzielic to jakiejs funkcji?
 
 
-    //TODO 20.03.2021 jakies makro na set i reset bitu?
-    
     //MASTER/SLAVE
     SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_MSTR);    
     SPI->CR1 |=  (CONF.SIDE<<SPI_BITPOS_CR1_MSTR);    
@@ -119,6 +120,8 @@ void configure_spi(SPI_CONF CONF){
 // }
 
 void enable_spi(int ENORDI){
+    while(_get_flag_status(SPI_BITPOS_SR_BSY));
+    
     if(ENORDI==0){
         SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SPE);    //SPI di
     }else{
