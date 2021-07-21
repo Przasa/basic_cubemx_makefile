@@ -20,9 +20,9 @@ int main(void)
 	SPI_CONF spi_conf;
 	spi_conf.MODE=SIMPLEX_TRANSMIT;
 	spi_conf.SIDE=MASTER;
-	spi_conf.NSS_TYPE=SOFTWARE;
+	spi_conf.NSS_TYPE=NSS_SOFT;
 	spi_conf.SLAVE_CONN=POINT_TO_POINT;
-	spi_conf.REMAP=DEFAULT;
+	spi_conf.REMAP=RMAP_DEFAULT;
 	configure_spi(spi_conf);
 	enable_spi(1);
 	
