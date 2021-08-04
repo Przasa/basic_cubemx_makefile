@@ -143,10 +143,11 @@ c) rejestry SPI:
     CPI_CR2:  master: SSOE: 0= SS output disabled (multimaster allowed), 1=ss output enabled (mm not allwed)
 d)  tryby pracy:
     full-duplex: BIDIMODE=0, RXONLY=0
-    uni, transmit: BIDIMODE=0, RXONLY=0; (jw)
-    uni, rec-only: BIDIMODE=0, RXONLY=1
-    bidi trans:    BIDIMODE=1, BIDIOE=1
-    bidi rec:      BIDIMODE=1, BIDIOE=0;
+    simplex_transmit: BIDIMODE=0, RXONLY=0; (jw)
+    simplex_rec-only: BIDIMODE=0, RXONLY=1
+    half-duplex: (bidi)
+        bidi trans:    BIDIMODE=1, BIDIOE=1 
+        bidi rec:      BIDIMODE=1, BIDIOE=0;
 e)  wysylanie/obieranie: master: TXE=1 => mozesz wrzucac do SPI_DR, slave: RXNE=1 => mozesz czytac z SPI_DR, BIDIOE=kierunek Bidi, jeszce BSY (szczegolnie przed wylaczenie)
 f) interrupts: TODO 20.03.2021 
 

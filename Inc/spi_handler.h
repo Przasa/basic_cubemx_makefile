@@ -9,7 +9,7 @@
 
 // TODO 20.03.2021: zrob podobna konktrukcje jak przy SPI_ADVCONF
 typedef enum{
-    FULL_DUPLEX,SIMPLEX_BIDI,SIMPLEX_RECEIVE,SIMPLEX_TRANSMIT
+    FULL_DUPLEX,HALF_DUPLEX,SIMPLEX_RECEIVE,SIMPLEX_TRANSMIT
 }SPI_MODE;
 
 typedef enum{
@@ -22,14 +22,13 @@ typedef struct{
 }SPI_SLVSEL;
 
 typedef enum{
-    SPI1=1,SPI2=2;
+    SPI1=1,SPI2=2
 }SPI_NR;
 
 typedef struct{
-    SPI_NR SPI_NR;
     SPI_MODE MODE;
     SPI_SIDE SIDE;
-    SPI_SLVSEL SLVSEL;
+    // SPI_SLVSEL SLVSEL;           // to nie konfigu ale osobnej funkcji
     // SPI_ACON_NSSTYPE NSS_TYPE;  // do advanced config
     // SPI_ACON_SLAVES SLAVE_CONN; // do advanced config
     // SPI_ACON_REMAP REMAP;    // to bym dal do advanced config
@@ -86,6 +85,7 @@ typedef enum
 // }SPI_ACON_SSOE;
 
 typedef struct{
+    SPI_NR SPI_NR;
     SPI_ACON_REMAP REMAP;    
     SPI_ACON_NSSTYPE NSS_TYPE;  
     // SPI_ACON_SLVSEL SLAVE_SELECT;
