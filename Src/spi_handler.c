@@ -13,6 +13,112 @@
 // 3. odebranie ramki
 // 4. nagranei przerwan.
 
+//     SPI_CR1:  master: BR[2:0]=xy, SPI_CPOL=xx,CPHA=xx, DFF = 16/8 bit, LSBFIRST, SSM=1, SSI=1, SSOE=1 (if req in outmode), MSTR=1, SPE=1
+//     SPI_CR1:  slave: DFF, CPOL, CPHA, LSBFIRST, [hw]NSS(hwmode), SSM(softmode)=1,SS1=0, MSTR=0, SPE=1
+//     CPI_CR2:  master: SSOE: 0= SS output disabled (multimaster allowed), 1=ss output enabled (mm not allwed)
+
+// SSM,SSOE,SSI
+
+// BIDIOE ,BIDIMODE, RXONLY,
+// full-duplex:
+//     master:     BIDIMODE=0,RXONLY=0,(BIDIOE=0)
+//     slave:      BIDIMODE=0,RXONLY=0,(BIDIOE=0)
+// half-duplex:
+//     master:     BIDIMODE=1,BIDIOE=1/0,(RXONLY=0)
+//     slave:     BIDIMODE=1, BIDIOE=1/0,(RXONLY=0)
+// siplex-receive:
+//     master:     BIDIMODE=0, RXONLY=1, (BIDIOE=0)
+//     slave:      BIDIMODE=0, RXONLY=1, (BIDIOE=0)
+// siplex-transmit:
+//     master:     BIDIMODE=0, RXONLY=0, (BIDIOE=0)
+//     slave:      BIDIMODE=0, RXONLY=0, (BIDIOE=0)
+
+
+//parkowanie 05.08.21:
+// a) dokoncz definicje malych funkcji ponizej
+// b) zrob podobne rzecz do transmisji i odbioru
+// c) zaimplementuj je configure SPI (stare rzeczy wywal)
+// d) przetestuj
+
+
+
+void _configureClock();
+void _configureSpiGPIOs(SPI_NR spi_nr, SPI_ACON_REMAP remap);
+void _configureSlaveGPIO(SPI_PIN spi_pin);
+void _configureFrame(SPI_ACON_CPHA cpha,SPI_ACON_CPOL cpol,SPI_ACON_DFF dff,SPI_ACON_LSBF lsbf); // podzielic?
+void _configureBR(SPI_ACON_BR br);
+void _configureBR(SPI_ACON_BR br){
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_BR);
+}
+
+void _configureSide(SPI_SIDE side);
+void _configureSide(SPI_SIDE side){
+    if(side==MASTER){
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_MSTR);
+    } else {
+        SPI->CR1 &=  ~(1<< SPI_BITPOS_CR1_MSTR);
+    }
+}
+
+void _configureSlaveSelect(SPI_SIDE side,SPI_ACON_NSSTYPE nss_type);    //multimaster sobie darujemy
+void _configureSlaveSelect(SPI_SIDE side,SPI_ACON_NSSTYPE nss_type){
+    if((side==SLAVE) & (nss_type=NSS_SOFT)){
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_SSM);
+    } else{
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_SSM);
+    }
+}
+
+void _configureBidi(SPI_MODE mode);
+void _configureBidi(SPI_MODE mode){
+    if(mode==FULL_DUPLEX){
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIMODE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
+    } else if(mode==HALF_DUPLEX){
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_BIDIMODE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
+    } else if (mode==SIMPLEX_RECEIVE){
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIMODE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_RXONLY);
+    } else if (mode==SIMPLEX_TRANSMIT){
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIMODE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
+    }
+    
+}
+
+// 5.08.21: przeniesc do _.h
+void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_PIN spi_pin);
+void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_PIN spi_pin){
+    if(nss_type==NSS_DEFPIN){
+        SPI->CR2 &= ~(1<<SPI_BITPOS_CR2_SSOE);
+        if(ENORDI){
+            SPI->CR2 |= (1<<SPI_BITPOS_CR2_SSOE);
+        }
+    } else if(nss_type==NSS_GPIO){
+        gpio_set_output(spi_pin.GPIO_PORT,spi_pin.GPIO_PIN,!ENORDI);
+    } else if(nss_type==NSS_SOFT){      //martwy case.
+        selectSlaveSW(ENORDI);
+    }
+}
+    
+void selectSlaveSW(int ENORDI);
+void selectSlaveSW(int ENORDI){
+    if(!(SPI->CR1 & (1<<SPI_BITPOS_CR1_SSM) )){
+        SPI->CR1 |= (1<<SPI_BITPOS_CR1_SSM);
+    }
+
+    if(ENORDI){
+        SPI->CR1 |= (1<<SPI_BITPOS_CR1_SSI);
+    } else{
+        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SSI);
+    }
+}
+
 
 
 
@@ -30,12 +136,7 @@
 // const DEF_SSOE=0;
 
 
-// konfiguracja roznych SPI na pozniej
-typedef struct{
-    GPIO_RegDef_t* GPIO_PORT;
-    uint16_t    GPIO_PIN;
-}SPI_PIN;
-SPI_PIN PIN_NSS, PIN_MISO,PIN_MOSI,PIN_CLK;
+
 
 
 const SPI_ADVCONF ADVCONF_DEFAULT={
@@ -68,39 +169,21 @@ void _set_gpio_assign(SPICONF);
 void _switch_bidi(BIDI_DIRECTION direction);    //moze jako public?
 void _set_advconf(SPI_ADVCONF CONF);
 
-// void set_soft_slave(int select);
-
-static int isConfiguredAdvanced(SPI_ADVCONF spi_conf){
-    
-    if(
-        spi_conf.SPI_NR == ADVCONF_DEFAULT.SPI_NR ||
-        spi_conf.REMAP == ADVCONF_DEFAULT.REMAP ||
-        spi_conf.NSS_TYPE == ADVCONF_DEFAULT.NSS_TYPE ||
-        spi_conf.DFF == ADVCONF_DEFAULT.DFF ||
-        spi_conf.CPHA == ADVCONF_DEFAULT.CPHA ||
-        spi_conf.CPOL == ADVCONF_DEFAULT.CPOL ||
-        spi_conf.BR == ADVCONF_DEFAULT.BR ||
-        spi_conf.LSBF == ADVCONF_DEFAULT.LSBF    ) {        return 1   ; }
-    else {return 0;}
-}
-
-//TODO 21.07.21: reconfigure_gpio();
-
-void configure_spi_adv(SPI_CONF conf, SPI_ADVCONF adv_conf){
-    //ustawianie defaultow. TODO: 23.02.2021 --> ok
-    ADVCONF = adv_conf;
-    configure_spi(conf);
-}
+::::::::::::::
 
 void configure_spi(SPI_CONF conf){
+
+    if(!isConfiguredAdvanced(ADVCONF)) _set_advconf(ADVCONF_DEFAULT);
     
+    configureClock();
+    configure
+
     if(!SPI1_PCLK_GET()){SPI1_PCLK_EN();}
 
     // 21.07.21: uwazaj: mozesz wysypc sie przy adv_config i remapowaniu. wymysl cos.
     _set_gpios(conf);
 
     //todo 25.03.2021: moze to oc ponizej tez wydzielic to jakiejs funkcji?
-    if(!isConfiguredAdvanced(ADVCONF)) _set_advconf(ADVCONF_DEFAULT);
 
 
 
@@ -129,6 +212,31 @@ void configure_spi(SPI_CONF conf){
         default:
             break;
     }
+
+
+static int isConfiguredAdvanced(SPI_ADVCONF spi_conf){
+    
+    if(
+        spi_conf.SPI_NR == ADVCONF_DEFAULT.SPI_NR ||
+        spi_conf.REMAP == ADVCONF_DEFAULT.REMAP ||
+        spi_conf.NSS_TYPE == ADVCONF_DEFAULT.NSS_TYPE ||
+        spi_conf.DFF == ADVCONF_DEFAULT.DFF ||
+        spi_conf.CPHA == ADVCONF_DEFAULT.CPHA ||
+        spi_conf.CPOL == ADVCONF_DEFAULT.CPOL ||
+        spi_conf.BR == ADVCONF_DEFAULT.BR ||
+        spi_conf.LSBF == ADVCONF_DEFAULT.LSBF    ) {        return 1   ; }
+    else {return 0;}
+}
+
+//TODO 21.07.21: reconfigure_gpio();
+
+void configure_spi_adv(SPI_CONF conf, SPI_ADVCONF adv_conf){
+    //ustawianie defaultow. TODO: 23.02.2021 --> ok
+    ADVCONF = adv_conf;
+    configure_spi(conf);
+}
+
+
 
 
 

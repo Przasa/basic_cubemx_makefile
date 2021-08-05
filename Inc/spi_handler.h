@@ -6,7 +6,6 @@
 
 
 
-
 // TODO 20.03.2021: zrob podobna konktrukcje jak przy SPI_ADVCONF
 typedef enum{
     FULL_DUPLEX,HALF_DUPLEX,SIMPLEX_RECEIVE,SIMPLEX_TRANSMIT
@@ -16,14 +15,8 @@ typedef enum{
     SLAVE=0,MASTER=1
 }SPI_SIDE;
 
-typedef struct{
-    uint16_t SLVSEL_GPIO_PORT;
-    uint16_t SLVSEL_GPIO_PIN;
-}SPI_SLVSEL;
 
-typedef enum{
-    SPI1=1,SPI2=2
-}SPI_NR;
+
 
 typedef struct{
     SPI_MODE MODE;
@@ -36,6 +29,23 @@ typedef struct{
 
 //:::::::::::::::::::::::::ADVANCED CONFIG:::::::::::::::::::::::::::::::::::::
 //TODO 21.07.2021: WYWAL NIEPOTRZEBNE WARTOSCI.
+
+// konfiguracja roznych SPI na pozniej
+// lepiej to nazwac SPI_GPIO
+typedef struct{
+    GPIO_RegDef_t* GPIO_PORT;
+    uint16_t    GPIO_PIN;
+}SPI_PIN;
+SPI_PIN PIN_NSS, PIN_MISO,PIN_MOSI,PIN_CLK;
+
+typedef struct{
+    uint16_t SLVSEL_GPIO_PORT;
+    uint16_t SLVSEL_GPIO_PIN;
+}SPI_SLVSEL;
+
+typedef enum{
+    SPI1=1,SPI2=2
+}SPI_NR;
 
 typedef enum{
     RMAP_DEFAULT,RMAP_REMAPPED
@@ -97,6 +107,9 @@ typedef struct{
     SPI_ACON_LSBF    LSBF;
     // SPI_ACON_SSOE    SSOE;
 }SPI_ADVCONF;
+
+
+
 
 //:::::::::::::::::::::::::PUBLIC METHODS:::::::::::::::::::::::::::::::::::::
 void configure_spi(SPI_CONF CONF);
