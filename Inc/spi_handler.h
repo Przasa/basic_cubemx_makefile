@@ -38,17 +38,19 @@ typedef struct{
 }SPI_PIN;
 SPI_PIN PIN_NSS, PIN_MISO,PIN_MOSI,PIN_CLK;
 
+// SPI_PIN PIN_SET[4] = {PIN_NSS,PIN_CLK,PIN_MISO,PIN_MOSI};
+
 typedef struct{
     uint16_t SLVSEL_GPIO_PORT;
     uint16_t SLVSEL_GPIO_PIN;
 }SPI_SLVSEL;
 
 typedef enum{
-    SPI1=1,SPI2=2
+    SPI_NR1=1,SPI_NR2=2
 }SPI_NR;
 
 typedef enum{
-    RMAP_DEFAULT,RMAP_REMAPPED
+    REMAP_DEFAULT,REMAP_REMAPPED
 }SPI_ACON_REMAP;
 
 typedef enum{

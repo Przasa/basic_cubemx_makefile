@@ -2,6 +2,16 @@
 #include "gpio_handler.h"
 #include "my_stm32f103xx.h"
 
+
+
+// 06.08.21: UWAGA UWAGA: caly czas uzywasz rejestrow z SPI_NR1, przed implementacja pod SPI_NR2 bedzie duzo pracy. --> a moze wystarczy wrzuzcic numer SPI w parametrach funkcji.
+
+//parkowanie 05.08.21:
+// a) dokoncz definicje malych funkcji ponizej
+// b) zrob podobne rzecz do transmisji i odbioru
+// c) zaimplementuj je configure SPI (stare rzeczy wywal)
+// d) przetestuj -> moze pomysl o testach jednostkowych!
+
 //overall TODO:
 // 1.konfiguracja poczatkowa
 //     -wybor SPI (1,2,3)       *opcjonal
@@ -34,18 +44,83 @@
 //     slave:      BIDIMODE=0, RXONLY=0, (BIDIOE=0)
 
 
-//parkowanie 05.08.21:
-// a) dokoncz definicje malych funkcji ponizej
-// b) zrob podobne rzecz do transmisji i odbioru
-// c) zaimplementuj je configure SPI (stare rzeczy wywal)
-// d) przetestuj
+
+void _configureGpioClock(SPI_NR spi_nr, SPI_ACON_REMAP remap);
+void _configureGpioClock(SPI_NR spi_nr, SPI_ACON_REMAP remap){
+    if(spi_nr==SPI_NR1 && remap == REMAP_DEFAULT){
+        if( !GPIOA_PCLK_GET()) GPIOA_PCLK_EN();
+    } else if (spi_nr==SPI_NR1 && remap == REMAP_REMAPPED){
+        if( !GPIOA_PCLK_GET()) GPIOA_PCLK_EN();
+        if( !GPIOB_PCLK_GET()) GPIOB_PCLK_EN();
+    } else if (spi_nr==SPI_NR2){
+        if( !GPIOB_PCLK_GET()) GPIOB_PCLK_EN();
+    }     
+}
+
+void _configureSpiClock(SPI_NR spi_nr);
+void _configureSpiClock(SPI_NR spi_nr){
+
+    
+    // jeszce clocki do GPIOSow
+         if (spi_nr==SPI_NR1 && !SPI1_PCLK_GET()){SPI1_PCLK_EN();}
+    else if (spi_nr==SPI_NR2 && !SPI2_PCLK_GET()){SPI2_PCLK_EN();}
+}
+
+void _configureSpiGPIOs(SPI_SIDE side, SPI_MODE mode); //podzielic to jeszcze?
+void _configureSpiGPIOs(SPI_SIDE side, SPI_MODE mode){
+    
+    if (side == MASTER){
+        // 06.08.2021: parkowanie
+    }
+}
+
+void _setSpiPins(SPI_NR spi_nr, SPI_ACON_REMAP remap);
+void _setSpiPins(SPI_NR spi_nr, SPI_ACON_REMAP remap){ 
+    if(spi_nr==SPI_NR1 && remap == REMAP_DEFAULT){
+        PIN_CLK.GPIO_PORT=GPIOA; PIN_CLK.GPIO_PIN=5;
+        PIN_NSS.GPIO_PORT=GPIOA; PIN_NSS.GPIO_PIN=4;
+        PIN_MISO.GPIO_PORT=GPIOA; PIN_MISO.GPIO_PIN=6;
+        PIN_MOSI.GPIO_PORT=GPIOA; PIN_MOSI.GPIO_PIN=7;
+    } else if (spi_nr==SPI_NR1 && remap == REMAP_REMAPPED){
+        PIN_CLK.GPIO_PORT=GPIOB; PIN_CLK.GPIO_PIN=3;
+        PIN_NSS.GPIO_PORT=GPIOA; PIN_NSS.GPIO_PIN=15;
+        PIN_MISO.GPIO_PORT=GPIOB; PIN_MISO.GPIO_PIN=4;
+        PIN_MOSI.GPIO_PORT=GPIOB; PIN_MOSI.GPIO_PIN=5;
+    } else if (spi_nr==SPI_NR2){
+        PIN_CLK.GPIO_PORT=GPIOB; PIN_CLK.GPIO_PIN=13;
+        PIN_NSS.GPIO_PORT=GPIOB; PIN_NSS.GPIO_PIN=12;
+        PIN_MISO.GPIO_PORT=GPIOB; PIN_MISO.GPIO_PIN=14;
+        PIN_MOSI.GPIO_PORT=GPIOB; PIN_MOSI.GPIO_PIN=15;
+    } 
+    
+}
+
+void _configureSlaveGPIO(SPI_PIN spi_pin){
+         if(spi_pin.GPIO_PORT==GPIOA){ GPIOA_PCLK_EN();}  
+    else if(spi_pin.GPIO_PORT==GPIOB){ GPIOB_PCLK_EN();}  
+    else if(spi_pin.GPIO_PORT==GPIOC){ GPIOC_PCLK_EN();}  
+    else if(spi_pin.GPIO_PORT==GPIOD){ GPIOD_PCLK_EN();}  
+    else if(spi_pin.GPIO_PORT==GPIOE){ GPIOE_PCLK_EN();}  
+
+    gpio_configure(spi_pin.GPIO_PORT,spi_pin.GPIO_PIN,OUTPUT_GPIO_PUSHPULL_10MHZ);
+
+}
 
 
-
-void _configureClock();
-void _configureSpiGPIOs(SPI_NR spi_nr, SPI_ACON_REMAP remap);
-void _configureSlaveGPIO(SPI_PIN spi_pin);
 void _configureFrame(SPI_ACON_CPHA cpha,SPI_ACON_CPOL cpol,SPI_ACON_DFF dff,SPI_ACON_LSBF lsbf); // podzielic?
+void _configureFrame(SPI_ACON_CPHA cpha,SPI_ACON_CPOL cpol,SPI_ACON_DFF dff,SPI_ACON_LSBF lsbf){
+    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_CPHA);
+    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_CPOL);
+    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_DFF);
+    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_LSBF);
+
+    SPI->CR1 |=  (cpha<< SPI_BITPOS_CR1_CPHA);
+    SPI->CR1 |=  (cpol<< SPI_BITPOS_CR1_CPOL);
+    SPI->CR1 |=  (dff<< SPI_BITPOS_CR1_DFF);
+    SPI->CR1 |=  (lsbf<< SPI_BITPOS_CR1_LSBF);
+
+}
+
 void _configureBR(SPI_ACON_BR br);
 void _configureBR(SPI_ACON_BR br){
         SPI->CR1 |=  (1<< SPI_BITPOS_CR1_BR);
@@ -124,7 +199,7 @@ void selectSlaveSW(int ENORDI){
 
 //todo 20.03.21:    jakies makro na set i reset bitu?
 //todo 20.03.21:    uzupelnij o remap.
-//todo 25.03.21:    uzupelnij o SPI2,SPI3... (jezeli sa) (i nawet ich remap). Pewnie trzeba powiekszyc configi
+//todo 25.03.21:    uzupelnij o SPI_NR2,SPI3... (jezeli sa) (i nawet ich remap). Pewnie trzeba powiekszyc configi
 //todo 25.03.21:    uniewersalnosc pinow GPIO (np MISO_PIN ustawiany w zlaeznosci od rodzaju SPI)
 //todo 25.03.21:    zrib driver dla NVICa
 //todo 25.03.21:    sprawdz zegar --> done
@@ -140,8 +215,8 @@ void selectSlaveSW(int ENORDI){
 
 
 const SPI_ADVCONF ADVCONF_DEFAULT={
-    SPI1,
-    RMAP_DEFAULT,
+    SPI_NR1,
+    REMAP_DEFAULT,
     NSS_DEFPIN,
     DFF_8,
     CPHA_SECOND,
@@ -366,9 +441,9 @@ void _conf_afio(SPI_CONF SPICONF){
     //TODO    
     // if(!AFIO_PCLK_GET()) {AFIO_PCLK_EN();}
     
-    // if(SPICONF.REMAP==RMAP_DEFAULT){
+    // if(SPICONF.REMAP==REMAP_DEFAULT){
     //     AFIO->MAPR &= ~(1<<0);
-    // } else if(SPICONF.REMAP==RMAP_REMAPPED){
+    // } else if(SPICONF.REMAP==REMAP_REMAPPED){
     //     AFIO->MAPR |=  (1<<0);
     // }
 }
@@ -420,13 +495,13 @@ void _set_gpios(ADVCONF adv_conf){
 void _set_gpio_assign(SPI_CONF spi_conf){
     
     switch(spi_conf.SPI_NR){
-        case SPI1:
+        case SPI_NR1:
             PIN_NSS.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=4;
             PIN_CLK.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=5;
             PIN_MISO.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=6;
             PIN_MOSI.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=7;
             break;
-        case SPI2:
+        case SPI_NR2:
             PIN_NSS.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=12;
             PIN_CLK.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=13;
             PIN_MISO.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=14;

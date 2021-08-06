@@ -22,7 +22,7 @@ int main(void)
 	spi_conf.SIDE=MASTER;
 	spi_conf.NSS_TYPE=NSS_SOFT;
 	spi_conf.SLAVE_CONN=POINT_TO_POINT;
-	spi_conf.REMAP=RMAP_DEFAULT;
+	spi_conf.REMAP=REMAP_DEFAULT;
 	configure_spi(spi_conf);
 	enable_spi(1);
 	
