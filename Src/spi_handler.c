@@ -68,8 +68,6 @@ void _configureSide(SPI_SIDE side);
 void _configureBidi(SPI_MODE mode);
 void _configureSlaveSelect(SPI_SIDE side,SPI_ACON_NSSTYPE nss_type);    //multimaster sobie darujemy
 
-void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_PIN spi_pin);
-void selectSlaveSW(int ENORDI);
 
 
 
@@ -78,32 +76,6 @@ void selectSlaveSW(int ENORDI);
 
 
 
-
-
-const SPI_ADVCONF ADVCONF_DEFAULT={
-    SPI_NR1,
-    REMAP_DEFAULT,
-    NSS_DEFPIN,
-    POINT2POINT,
-    DFF_8,
-    CPHA_SECOND,
-    CPOL_HIGH,
-    BR_DIV32,
-    LSBF_MSB
-    // SSOE_DI
-};
-SPI_ADVCONF ADVCONF;
-
-
-typedef enum{
-    RECEIVE,TRANSMIT
-}BIDI_DIRECTION;
-
-void configure_spi(SPI_CONF CONF);
-void configure_spi_adv(SPI_CONF CONF, SPI_ADVCONF ADC_CONF);
-void enable_spi(int ENORDI);
-void send_data(uint8_t* transmit_buffer, int length);
-void receive_data(uint8_t* receive_buffer, int length);
 
 
 
@@ -112,7 +84,16 @@ void receive_data(uint8_t* receive_buffer, int length);
 
 // :::::::::::::::: PUBLIC FUNCTIONS ::::::::::::::::::
 
+// funckje publiczne z pliku.h
+// void configure_spi(SPI_CONF spi_conf);
+// void enable_spi(int ENORDI);
+// void send_data(uint8_t* transmit_buffer, int length);
+// void receive_data(uint8_t* receive_buffer, int length);
+// void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_GPIO spi_pin);
+// void selectSlaveSW(int ENORDI);
 
+
+// void configure_spi(SPI_c)
 
 void configure_spi_old(SPI_CONF conf){
 
@@ -157,19 +138,6 @@ void configure_spi_old(SPI_CONF conf){
 
 }
 
-static int isConfiguredAdvanced(SPI_ADVCONF spi_conf){
-    
-    if(
-        spi_conf.SPI_NR == ADVCONF_DEFAULT.SPI_NR ||
-        spi_conf.REMAP == ADVCONF_DEFAULT.REMAP ||
-        spi_conf.NSS_TYPE == ADVCONF_DEFAULT.NSS_TYPE ||
-        spi_conf.DFF == ADVCONF_DEFAULT.DFF ||
-        spi_conf.CPHA == ADVCONF_DEFAULT.CPHA ||
-        spi_conf.CPOL == ADVCONF_DEFAULT.CPOL ||
-        spi_conf.BR == ADVCONF_DEFAULT.BR ||
-        spi_conf.LSBF == ADVCONF_DEFAULT.LSBF    ) {        return 1   ; }
-    else {return 0;}
-}
 
 
 
@@ -397,7 +365,7 @@ void _setSpiPins(SPI_NR spi_nr, SPI_ACON_REMAP remap){
     
 }
 
-void _configureSlaveGPIO(SPI_PIN spi_pin){
+void _configureSlaveGPIO(SPI_GPIO spi_pin){
          if(spi_pin.GPIO_PORT==GPIOA){ GPIOA_PCLK_EN();}  
     else if(spi_pin.GPIO_PORT==GPIOB){ GPIOB_PCLK_EN();}  
     else if(spi_pin.GPIO_PORT==GPIOC){ GPIOC_PCLK_EN();}  
@@ -468,7 +436,7 @@ void _configureBidi(SPI_MODE mode){
 }
 
 // 5.08.21: przeniesc do _.h
-void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_PIN spi_pin){
+void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_GPIO spi_pin){
     if(nss_type==NSS_DEFPIN){
         SPI->CR2 &= ~(1<<SPI_BITPOS_CR2_SSOE);
         if(ENORDI){
