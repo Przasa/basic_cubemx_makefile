@@ -3,6 +3,19 @@
 #include "my_stm32f103xx.h"
 
 
+//todo 20.03.21:    jakies makro na set i reset bitu?
+//todo 20.03.21:    uzupelnij o remap.
+//todo 25.03.21:    uzupelnij o SPI_NR2,SPI3... (jezeli sa) (i nawet ich remap). Pewnie trzeba powiekszyc configi
+//todo 25.03.21:    uniewersalnosc pinow GPIO (np MISO_PIN ustawiany w zlaeznosci od rodzaju SPI)
+//todo 25.03.21:    zrib driver dla NVICa
+//todo 25.03.21:    sprawdz zegar --> done
+//todo 25.03.21:    zaznaczanie slav'ow przez GPIO
+//todo 25.03.21:    przesylanie przez przerwania.
+
+//TODO 23.03.2021: Use it somehow.
+// const DEF_CPOL = 0; DEF_CPHA=1;DEF_DFF=0;DEF_LSBFIRST=1;DEF_BRATE=0; DEF_SSOE=1;
+// const DEF_SSOE=0;
+
 
 // 06.08.21: UWAGA UWAGA: caly czas uzywasz rejestrow z SPI_NR1, przed implementacja pod SPI_NR2 bedzie duzo pracy. --> a moze wystarczy wrzuzcic numer SPI w parametrach funkcji.
 
@@ -46,169 +59,22 @@
 
 
 void _configureGpioClock(SPI_NR spi_nr, SPI_ACON_REMAP remap);
-void _configureGpioClock(SPI_NR spi_nr, SPI_ACON_REMAP remap){
-    if(spi_nr==SPI_NR1 && remap == REMAP_DEFAULT){
-        if( !GPIOA_PCLK_GET()) GPIOA_PCLK_EN();
-    } else if (spi_nr==SPI_NR1 && remap == REMAP_REMAPPED){
-        if( !GPIOA_PCLK_GET()) GPIOA_PCLK_EN();
-        if( !GPIOB_PCLK_GET()) GPIOB_PCLK_EN();
-    } else if (spi_nr==SPI_NR2){
-        if( !GPIOB_PCLK_GET()) GPIOB_PCLK_EN();
-    }     
-}
-
 void _configureSpiClock(SPI_NR spi_nr);
-void _configureSpiClock(SPI_NR spi_nr){
-
-    
-    // jeszce clocki do GPIOSow
-         if (spi_nr==SPI_NR1 && !SPI1_PCLK_GET()){SPI1_PCLK_EN();}
-    else if (spi_nr==SPI_NR2 && !SPI2_PCLK_GET()){SPI2_PCLK_EN();}
-}
-
-void _configureSpiGPIOs(SPI_SIDE side, SPI_MODE mode); //podzielic to jeszcze?
-void _configureSpiGPIOs(SPI_SIDE side, SPI_MODE mode){
-    
-    if (side == MASTER){
-        // 06.08.2021: parkowanie
-    }
-}
-
+void _configureSpiGPIOs(SPI_SIDE side, SPI_MODE mode, SPI_ACON_NSSTYPE nss_type,SPI_ACON_SLAVEQTY slave_qty); //podzielic to jeszcze?
 void _setSpiPins(SPI_NR spi_nr, SPI_ACON_REMAP remap);
-void _setSpiPins(SPI_NR spi_nr, SPI_ACON_REMAP remap){ 
-    if(spi_nr==SPI_NR1 && remap == REMAP_DEFAULT){
-        PIN_CLK.GPIO_PORT=GPIOA; PIN_CLK.GPIO_PIN=5;
-        PIN_NSS.GPIO_PORT=GPIOA; PIN_NSS.GPIO_PIN=4;
-        PIN_MISO.GPIO_PORT=GPIOA; PIN_MISO.GPIO_PIN=6;
-        PIN_MOSI.GPIO_PORT=GPIOA; PIN_MOSI.GPIO_PIN=7;
-    } else if (spi_nr==SPI_NR1 && remap == REMAP_REMAPPED){
-        PIN_CLK.GPIO_PORT=GPIOB; PIN_CLK.GPIO_PIN=3;
-        PIN_NSS.GPIO_PORT=GPIOA; PIN_NSS.GPIO_PIN=15;
-        PIN_MISO.GPIO_PORT=GPIOB; PIN_MISO.GPIO_PIN=4;
-        PIN_MOSI.GPIO_PORT=GPIOB; PIN_MOSI.GPIO_PIN=5;
-    } else if (spi_nr==SPI_NR2){
-        PIN_CLK.GPIO_PORT=GPIOB; PIN_CLK.GPIO_PIN=13;
-        PIN_NSS.GPIO_PORT=GPIOB; PIN_NSS.GPIO_PIN=12;
-        PIN_MISO.GPIO_PORT=GPIOB; PIN_MISO.GPIO_PIN=14;
-        PIN_MOSI.GPIO_PORT=GPIOB; PIN_MOSI.GPIO_PIN=15;
-    } 
-    
-}
-
-void _configureSlaveGPIO(SPI_PIN spi_pin){
-         if(spi_pin.GPIO_PORT==GPIOA){ GPIOA_PCLK_EN();}  
-    else if(spi_pin.GPIO_PORT==GPIOB){ GPIOB_PCLK_EN();}  
-    else if(spi_pin.GPIO_PORT==GPIOC){ GPIOC_PCLK_EN();}  
-    else if(spi_pin.GPIO_PORT==GPIOD){ GPIOD_PCLK_EN();}  
-    else if(spi_pin.GPIO_PORT==GPIOE){ GPIOE_PCLK_EN();}  
-
-    gpio_configure(spi_pin.GPIO_PORT,spi_pin.GPIO_PIN,OUTPUT_GPIO_PUSHPULL_10MHZ);
-
-}
-
-
 void _configureFrame(SPI_ACON_CPHA cpha,SPI_ACON_CPOL cpol,SPI_ACON_DFF dff,SPI_ACON_LSBF lsbf); // podzielic?
-void _configureFrame(SPI_ACON_CPHA cpha,SPI_ACON_CPOL cpol,SPI_ACON_DFF dff,SPI_ACON_LSBF lsbf){
-    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_CPHA);
-    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_CPOL);
-    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_DFF);
-    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_LSBF);
-
-    SPI->CR1 |=  (cpha<< SPI_BITPOS_CR1_CPHA);
-    SPI->CR1 |=  (cpol<< SPI_BITPOS_CR1_CPOL);
-    SPI->CR1 |=  (dff<< SPI_BITPOS_CR1_DFF);
-    SPI->CR1 |=  (lsbf<< SPI_BITPOS_CR1_LSBF);
-
-}
-
 void _configureBR(SPI_ACON_BR br);
-void _configureBR(SPI_ACON_BR br){
-        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_BR);
-}
-
 void _configureSide(SPI_SIDE side);
-void _configureSide(SPI_SIDE side){
-    if(side==MASTER){
-        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_MSTR);
-    } else {
-        SPI->CR1 &=  ~(1<< SPI_BITPOS_CR1_MSTR);
-    }
-}
-
-void _configureSlaveSelect(SPI_SIDE side,SPI_ACON_NSSTYPE nss_type);    //multimaster sobie darujemy
-void _configureSlaveSelect(SPI_SIDE side,SPI_ACON_NSSTYPE nss_type){
-    if((side==SLAVE) & (nss_type=NSS_SOFT)){
-        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_SSM);
-    } else{
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_SSM);
-    }
-}
-
 void _configureBidi(SPI_MODE mode);
-void _configureBidi(SPI_MODE mode){
-    if(mode==FULL_DUPLEX){
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIMODE);
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
-    } else if(mode==HALF_DUPLEX){
-        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_BIDIMODE);
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
-    } else if (mode==SIMPLEX_RECEIVE){
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIMODE);
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
-        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_RXONLY);
-    } else if (mode==SIMPLEX_TRANSMIT){
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIMODE);
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
-        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
-    }
-    
-}
+void _configureSlaveSelect(SPI_SIDE side,SPI_ACON_NSSTYPE nss_type);    //multimaster sobie darujemy
 
-// 5.08.21: przeniesc do _.h
 void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_PIN spi_pin);
-void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_PIN spi_pin){
-    if(nss_type==NSS_DEFPIN){
-        SPI->CR2 &= ~(1<<SPI_BITPOS_CR2_SSOE);
-        if(ENORDI){
-            SPI->CR2 |= (1<<SPI_BITPOS_CR2_SSOE);
-        }
-    } else if(nss_type==NSS_GPIO){
-        gpio_set_output(spi_pin.GPIO_PORT,spi_pin.GPIO_PIN,!ENORDI);
-    } else if(nss_type==NSS_SOFT){      //martwy case.
-        selectSlaveSW(ENORDI);
-    }
-}
-    
 void selectSlaveSW(int ENORDI);
-void selectSlaveSW(int ENORDI){
-    if(!(SPI->CR1 & (1<<SPI_BITPOS_CR1_SSM) )){
-        SPI->CR1 |= (1<<SPI_BITPOS_CR1_SSM);
-    }
-
-    if(ENORDI){
-        SPI->CR1 |= (1<<SPI_BITPOS_CR1_SSI);
-    } else{
-        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SSI);
-    }
-}
 
 
 
 
-//todo 20.03.21:    jakies makro na set i reset bitu?
-//todo 20.03.21:    uzupelnij o remap.
-//todo 25.03.21:    uzupelnij o SPI_NR2,SPI3... (jezeli sa) (i nawet ich remap). Pewnie trzeba powiekszyc configi
-//todo 25.03.21:    uniewersalnosc pinow GPIO (np MISO_PIN ustawiany w zlaeznosci od rodzaju SPI)
-//todo 25.03.21:    zrib driver dla NVICa
-//todo 25.03.21:    sprawdz zegar --> done
-//todo 25.03.21:    zaznaczanie slav'ow przez GPIO
-//todo 25.03.21:    przesylanie przez przerwania.
 
-//TODO 23.03.2021: Use it somehow.
-// const DEF_CPOL = 0; DEF_CPHA=1;DEF_DFF=0;DEF_LSBFIRST=1;DEF_BRATE=0; DEF_SSOE=1;
-// const DEF_SSOE=0;
 
 
 
@@ -218,6 +84,7 @@ const SPI_ADVCONF ADVCONF_DEFAULT={
     SPI_NR1,
     REMAP_DEFAULT,
     NSS_DEFPIN,
+    POINT2POINT,
     DFF_8,
     CPHA_SECOND,
     CPOL_HIGH,
@@ -238,21 +105,21 @@ void enable_spi(int ENORDI);
 void send_data(uint8_t* transmit_buffer, int length);
 void receive_data(uint8_t* receive_buffer, int length);
 
-void _conf_afio(SPI_CONF CONF);
-void _set_gpios(SPI_CONF CONF);
-void _set_gpio_assign(SPICONF);
-void _switch_bidi(BIDI_DIRECTION direction);    //moze jako public?
-void _set_advconf(SPI_ADVCONF CONF);
 
-::::::::::::::
 
-void configure_spi(SPI_CONF conf){
+// ::::::::::::::
+
+
+// :::::::::::::::: PUBLIC FUNCTIONS ::::::::::::::::::
+
+
+
+void configure_spi_old(SPI_CONF conf){
 
     if(!isConfiguredAdvanced(ADVCONF)) _set_advconf(ADVCONF_DEFAULT);
     
     configureClock();
-    configure
-
+    
     if(!SPI1_PCLK_GET()){SPI1_PCLK_EN();}
 
     // 21.07.21: uwazaj: mozesz wysypc sie przy adv_config i remapowaniu. wymysl cos.
@@ -288,6 +155,7 @@ void configure_spi(SPI_CONF conf){
             break;
     }
 
+}
 
 static int isConfiguredAdvanced(SPI_ADVCONF spi_conf){
     
@@ -303,46 +171,8 @@ static int isConfiguredAdvanced(SPI_ADVCONF spi_conf){
     else {return 0;}
 }
 
-//TODO 21.07.21: reconfigure_gpio();
-
-void configure_spi_adv(SPI_CONF conf, SPI_ADVCONF adv_conf){
-    //ustawianie defaultow. TODO: 23.02.2021 --> ok
-    ADVCONF = adv_conf;
-    configure_spi(conf);
-}
 
 
-
-
-
-
-    // //tylko gdy master hardwerowo zarzadza 1 slavem, moze wyorzystac swoje NSS'a jako wyjscie do selecta.
-    // if(conf.SIDE==MASTER && conf.NSS_TYPE==NSS_DEFPIN && conf.SLAVE_CONN==POINT_TO_POINT){ 
-    //     SPI->CR2 |=  (1<<SPI_BITPOS_CR2_SSOE); //SSOE: master's NSS pin as output -> automatically selecting the slave
-    // } else{
-    //     SPI->CR2 &= ~(1<<SPI_BITPOS_CR2_SSOE); //SSOE as input.
-    // }
-
-    // //SSI
-    // if(conf.SIDE==SLAVE && conf.NSS_TYPE==NSS_SOFT){
-    //     SPI->CR1 |=  (1<<SPI_BITPOS_CR1_SSI);    
-    // }else
-    // {
-    //     SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SSI);    
-    // }
-    
-
-}
-
-//nie potrzebne
-// void set_soft_slave(int select){
-
-//     if(select==0){
-//         SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SSI);    
-//     } else if(select==1){
-//         SPI->CR1 |=  (1<<SPI_BITPOS_CR1_SSI);    
-//     }
-// }
 
 void enable_spi(int ENORDI){
     while(_get_flag_status(SPI_BITPOS_SR_BSY));
@@ -369,6 +199,18 @@ void send_data(uint8_t* transmit_buffer, int length){
             (uint16_t*)transmit_buffer++;
         }
     }
+
+// void sendByte(uint8_t byte){
+//     //BSY FLAG?
+//     while((SPI->SR & (1 << SPI_BITPOS_SR_TXE))!=0){};
+//     SPI->DR |= byte;
+
+
+// }
+// int receiveByte(){
+//     while((SPI->SR & (1 << SPI_BITPOS_SR_RXNE))!=0){};
+//     return (SPI->DR & 255);
+// }
 };
 
 void receive_data(uint8_t* receive_buffer, int length){
@@ -389,128 +231,397 @@ void receive_data(uint8_t* receive_buffer, int length){
 
 }
 
-// void sendByte(uint8_t byte){
-//     //BSY FLAG?
-//     while((SPI->SR & (1 << SPI_BITPOS_SR_TXE))!=0){};
-//     SPI->DR |= byte;
 
-
-// }
-// int receiveByte(){
-//     while((SPI->SR & (1 << SPI_BITPOS_SR_RXNE))!=0){};
-//     return (SPI->DR & 255);
-// }
 
 
 //:::::::::::::::::::::PRIVATE_HELPERS::::::::::::::::::::::::::::::::::
-void  _set_advconf(SPI_ADVCONF adv_conf){
-    ADVCONF=adv_conf;
 
-    _set_gpios(adv_conf.SPI_NR);
-    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_CPOL);    //cpol
-    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_CPHA);    //cpha
-    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_DFF);   //DFF
-    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_LSBF);    //LSBFFIRT =1
-    SPI->CR1 &=  ~(7<<SPI_BITPOS_CR1_BR);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
-    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_SSM);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
+void _configureGpioClock(SPI_NR spi_nr, SPI_ACON_REMAP remap){
+    if(spi_nr==SPI_NR1 && remap == REMAP_DEFAULT){
+        if( !GPIOA_PCLK_GET()) GPIOA_PCLK_EN();
+    } else if (spi_nr==SPI_NR1 && remap == REMAP_REMAPPED){
+        if( !GPIOA_PCLK_GET()) GPIOA_PCLK_EN();
+        if( !GPIOB_PCLK_GET()) GPIOB_PCLK_EN();
+    } else if (spi_nr==SPI_NR2){
+        if( !GPIOB_PCLK_GET()) GPIOB_PCLK_EN();
+    }     
+}
 
-    SPI->CR1 |=  (ADVCONF.CPOL<<SPI_BITPOS_CR1_CPOL);    //cpol
-    SPI->CR1 |=  (ADVCONF.CPHA<<SPI_BITPOS_CR1_CPHA);    //cpha
-    SPI->CR1 |=  (ADVCONF.DFF<<SPI_BITPOS_CR1_DFF);   //DFF
-    SPI->CR1 |=  (ADVCONF.LSBF<<SPI_BITPOS_CR1_LSBF);    //LSBFFIRT =1
-    SPI->CR1 |=  (ADVCONF.BR<<SPI_BITPOS_CR1_BR);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
+void _configureSpiClock(SPI_NR spi_nr){
     
-    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_SSM);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
-    
+         if (spi_nr==SPI_NR1 && !SPI1_PCLK_GET()){SPI1_PCLK_EN();}
+    else if (spi_nr==SPI_NR2 && !SPI2_PCLK_GET()){SPI2_PCLK_EN();}
+}
+
+void _configureSpiGPIOs(SPI_SIDE side, SPI_MODE mode, SPI_ACON_NSSTYPE nss_type,SPI_ACON_SLAVEQTY slave_qty){
+
+
+    //preferujesz input floating zamiast input pull-ip lub pull-down
+    //nie wspierasz multi master
+    if(mode==FULL_DUPLEX && side==MASTER && nss_type==NSS_DEFPIN && (slave_qty==POINT2POINT || slave_qty==MUTLI_SLAVE)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+    }
+    if(mode==FULL_DUPLEX && side==MASTER && (nss_type==NSS_GPIO || nss_type==NSS_SOFT) && (slave_qty==POINT2POINT || slave_qty==MUTLI_SLAVE)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+    }
+    if(mode==FULL_DUPLEX && side==SLAVE && (nss_type==NSS_DEFPIN || nss_type==NSS_GPIO) && slave_qty==POINT2POINT){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+    if(mode==FULL_DUPLEX && side==SLAVE && (nss_type==NSS_DEFPIN || nss_type==NSS_GPIO) && slave_qty==MUTLI_SLAVE){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_GPIO_ODRAIN_10MHZ);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+    if(mode==FULL_DUPLEX && side==SLAVE && nss_type==NSS_SOFT && (slave_qty==MUTLI_SLAVE || slave_qty==POINT2POINT)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        // gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_GPIO_ODRAIN_10MHZ);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+
+    if(mode==HALF_DUPLEX && side==MASTER && nss_type==NSS_DEFPIN && (slave_qty==POINT2POINT || slave_qty==MUTLI_SLAVE)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+    }
+    if(mode==HALF_DUPLEX && side==MASTER && (nss_type==NSS_GPIO || nss_type==NSS_SOFT) && (slave_qty==POINT2POINT || slave_qty==MUTLI_SLAVE)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+    }
+    if(mode==HALF_DUPLEX && side==SLAVE && (nss_type==NSS_DEFPIN || nss_type==NSS_GPIO) && slave_qty==POINT2POINT){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+    if(mode==HALF_DUPLEX && side==SLAVE && (nss_type==NSS_DEFPIN || nss_type==NSS_GPIO) && slave_qty==MUTLI_SLAVE){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_GPIO_ODRAIN_10MHZ);
+        // gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+    if(mode==HALF_DUPLEX && side==SLAVE && nss_type==NSS_SOFT && (slave_qty==MUTLI_SLAVE || slave_qty==POINT2POINT)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        // gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_GPIO_ODRAIN_10MHZ);
+        // gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+
+    if(mode==SIMPLEX_RECEIVE && side==MASTER && nss_type==NSS_DEFPIN && (slave_qty==POINT2POINT || slave_qty==MUTLI_SLAVE)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,INPUT_FLOATING);
+        // gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+    }
+    if(mode==SIMPLEX_RECEIVE && side==MASTER && (nss_type==NSS_GPIO || nss_type==NSS_SOFT) && (slave_qty==POINT2POINT || slave_qty==MUTLI_SLAVE)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,INPUT_FLOATING);
+        // gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+    }
+    if(mode==SIMPLEX_RECEIVE && side==SLAVE && (nss_type==NSS_DEFPIN || nss_type==NSS_GPIO) && (slave_qty==MUTLI_SLAVE || slave_qty==POINT2POINT)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        // gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_GPIO_ODRAIN_10MHZ);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+    if(mode==SIMPLEX_RECEIVE && side==SLAVE && nss_type==NSS_SOFT && (slave_qty==MUTLI_SLAVE || slave_qty==POINT2POINT)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        // gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        // gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_GPIO_ODRAIN_10MHZ);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+
+    if(mode==SIMPLEX_TRANSMIT && side==MASTER && nss_type==NSS_DEFPIN && (slave_qty==POINT2POINT || slave_qty==MUTLI_SLAVE)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+    }
+    if(mode==SIMPLEX_TRANSMIT && side==MASTER && (nss_type==NSS_GPIO || nss_type==NSS_SOFT) && (slave_qty==POINT2POINT || slave_qty==MUTLI_SLAVE)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+    }
+    if(mode==SIMPLEX_TRANSMIT && side==SLAVE && (nss_type==NSS_DEFPIN || nss_type==NSS_GPIO) && slave_qty==POINT2POINT){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+        // gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+    if(mode==SIMPLEX_TRANSMIT && side==SLAVE && (nss_type==NSS_DEFPIN || nss_type==NSS_GPIO) && slave_qty==MUTLI_SLAVE){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_GPIO_ODRAIN_10MHZ);
+        // gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+    if(mode==SIMPLEX_TRANSMIT && side==SLAVE && nss_type==NSS_SOFT && (slave_qty==MUTLI_SLAVE || slave_qty==POINT2POINT)){
+        gpio_configure(PIN_CLK.GPIO_PORT, PIN_CLK.GPIO_PIN,INPUT_FLOATING);
+        // gpio_configure(PIN_NSS.GPIO_PORT, PIN_NSS.GPIO_PIN,INPUT_FLOATING);
+        gpio_configure(PIN_MISO.GPIO_PORT, PIN_MISO.GPIO_PIN,OUTPUT_GPIO_ODRAIN_10MHZ);
+        // gpio_configure(PIN_MOSI.GPIO_PORT, PIN_MOSI.GPIO_PIN,INPUT_FLOATING);
+    }
+}
+
+void _setSpiPins(SPI_NR spi_nr, SPI_ACON_REMAP remap){ 
+    if(spi_nr==SPI_NR1 && remap == REMAP_DEFAULT){
+        PIN_CLK.GPIO_PORT=GPIOA; PIN_CLK.GPIO_PIN=5;
+        PIN_NSS.GPIO_PORT=GPIOA; PIN_NSS.GPIO_PIN=4;
+        PIN_MISO.GPIO_PORT=GPIOA; PIN_MISO.GPIO_PIN=6;
+        PIN_MOSI.GPIO_PORT=GPIOA; PIN_MOSI.GPIO_PIN=7;
+    } else if (spi_nr==SPI_NR1 && remap == REMAP_REMAPPED){
+        PIN_CLK.GPIO_PORT=GPIOB; PIN_CLK.GPIO_PIN=3;
+        PIN_NSS.GPIO_PORT=GPIOA; PIN_NSS.GPIO_PIN=15;
+        PIN_MISO.GPIO_PORT=GPIOB; PIN_MISO.GPIO_PIN=4;
+        PIN_MOSI.GPIO_PORT=GPIOB; PIN_MOSI.GPIO_PIN=5;
+    } else if (spi_nr==SPI_NR2){
+        PIN_CLK.GPIO_PORT=GPIOB; PIN_CLK.GPIO_PIN=13;
+        PIN_NSS.GPIO_PORT=GPIOB; PIN_NSS.GPIO_PIN=12;
+        PIN_MISO.GPIO_PORT=GPIOB; PIN_MISO.GPIO_PIN=14;
+        PIN_MOSI.GPIO_PORT=GPIOB; PIN_MOSI.GPIO_PIN=15;
+    } 
     
 }
 
-//potrzebne wogole?
-void _select_slave(){
-    //TODO 22.03.2021: albo przez NSS, albo przez GPIO!
+void _configureSlaveGPIO(SPI_PIN spi_pin){
+         if(spi_pin.GPIO_PORT==GPIOA){ GPIOA_PCLK_EN();}  
+    else if(spi_pin.GPIO_PORT==GPIOB){ GPIOB_PCLK_EN();}  
+    else if(spi_pin.GPIO_PORT==GPIOC){ GPIOC_PCLK_EN();}  
+    else if(spi_pin.GPIO_PORT==GPIOD){ GPIOD_PCLK_EN();}  
+    else if(spi_pin.GPIO_PORT==GPIOE){ GPIOE_PCLK_EN();}  
+
+    gpio_configure(spi_pin.GPIO_PORT,spi_pin.GPIO_PIN,OUTPUT_GPIO_PUSHPULL_10MHZ);
+
 }
 
-void _switch_bidi(BIDI_DIRECTION DIR){
-    //todo 23.03.2021: spprwdz czy bidi smiga.
-    if(DIR==RECEIVE){       SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIOE);    }
-    else if(DIR==TRANSMIT){ SPI->CR1 |=  (1<<SPI_BITPOS_CR1_BIDIOE);    }
+
+void _configureFrame(SPI_ACON_CPHA cpha,SPI_ACON_CPOL cpol,SPI_ACON_DFF dff,SPI_ACON_LSBF lsbf){
+    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_CPHA);
+    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_CPOL);
+    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_DFF);
+    SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_LSBF);
+
+    SPI->CR1 |=  (cpha<< SPI_BITPOS_CR1_CPHA);
+    SPI->CR1 |=  (cpol<< SPI_BITPOS_CR1_CPOL);
+    SPI->CR1 |=  (dff<< SPI_BITPOS_CR1_DFF);
+    SPI->CR1 |=  (lsbf<< SPI_BITPOS_CR1_LSBF);
+
+}
+
+
+void _configureBR(SPI_ACON_BR br){
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_BR);
+}
+
+
+void _configureSide(SPI_SIDE side){
+    if(side==MASTER){
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_MSTR);
+    } else {
+        SPI->CR1 &=  ~(1<< SPI_BITPOS_CR1_MSTR);
+    }
+}
+
+
+void _configureSlaveSelect(SPI_SIDE side,SPI_ACON_NSSTYPE nss_type){
+    if((side==SLAVE) & (nss_type=NSS_SOFT)){
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_SSM);
+    } else{
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_SSM);
+    }
+}
+
+
+void _configureBidi(SPI_MODE mode){
+    if(mode==FULL_DUPLEX){
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIMODE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
+    } else if(mode==HALF_DUPLEX){
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_BIDIMODE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
+    } else if (mode==SIMPLEX_RECEIVE){
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIMODE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
+        SPI->CR1 |=  (1<< SPI_BITPOS_CR1_RXONLY);
+    } else if (mode==SIMPLEX_TRANSMIT){
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIMODE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
+        SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
+    }
     
 }
 
-void _conf_afio(SPI_CONF SPICONF){   
-    //TODO    
-    // if(!AFIO_PCLK_GET()) {AFIO_PCLK_EN();}
-    
-    // if(SPICONF.REMAP==REMAP_DEFAULT){
-    //     AFIO->MAPR &= ~(1<<0);
-    // } else if(SPICONF.REMAP==REMAP_REMAPPED){
-    //     AFIO->MAPR |=  (1<<0);
-    // }
-}
-
-void _set_gpios(ADVCONF adv_conf){
-
-    _set_gpio_assign(SPI_NR spi_nr);
-    
-
-    //TODO 25.03.2021 malo to czytelne, nie zagniezdzaj ifow. NSS jest OK
-
-    if(!GPIOA_PCLK_GET()) {GPIOC_PCLK_EN();}
-
-    //SCK PIN
-    if(SPICONF.SIDE==MASTER){ gpio_configure(GPIOA,SCK_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);}
-    else if(SPICONF.SIDE==SLAVE){ gpio_configure(GPIOA,SCK_PIN,INPUT_FLOATING);}
-
-    // note: simplex trans i rec, programistycznie wyglada jak full-duplex. tylko fizycznie usuwasz jeden przewod.
-    // MISO/MOSI pins
-    if(SPICONF.MODE==FULL_DUPLEX || SPICONF.MODE==SIMPLEX_RECEIVE || SPICONF.MODE==SIMPLEX_TRANSMIT){
-        if(SPICONF.SIDE==MASTER){
-            gpio_configure(GPIOA,MISO_PIN,INPUT_PUPD);                 //MISO, INPUT_FLOATING possible
-            gpio_configure(GPIOA,MOSI_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);  //MOSI
-        } else if (SPICONF.SIDE==SLAVE){
-            gpio_configure(GPIOA,MOSI_PIN,INPUT_PUPD);             //MOSI, INPUT_FLOATING also possible           
-            if(SPICONF.SLAVE_CONN==POINT_TO_POINT){gpio_configure(GPIOA,MISO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ); } //MISO
-            else if(SPICONF.SLAVE_CONN==MULTISLAVE){gpio_configure(GPIOA,MISO_PIN,OUTPUT_ALT_ODRAIN_10MHZ); }  //MISO
+// 5.08.21: przeniesc do _.h
+void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_PIN spi_pin){
+    if(nss_type==NSS_DEFPIN){
+        SPI->CR2 &= ~(1<<SPI_BITPOS_CR2_SSOE);
+        if(ENORDI){
+            SPI->CR2 |= (1<<SPI_BITPOS_CR2_SSOE);
         }
-    } else if(SPICONF.MODE==HALF_DUPLEX){
-        if(SPICONF.SIDE==MASTER){
-            gpio_configure(GPIOA,MOSI_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);  //MOSI
-        } else if (SPICONF.SIDE==SLAVE){
-            if(SPICONF.SLAVE_CONN==POINT_TO_POINT){gpio_configure(GPIOA,MISO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ); } //MISO
-            else if(SPICONF.SLAVE_CONN==MULTISLAVE){gpio_configure(GPIOA,MISO_PIN,OUTPUT_ALT_ODRAIN_10MHZ); }  //MISO
-        }
-    }
-
-    //NSS PIN
-    if(SPICONF.NSS_TYPE==NSS_DEFPIN && SPICONF.SIDE==MASTER ){
-        gpio_configure(GPIOA,SPI1_NSS_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
-    } else if(SPICONF.NSS_TYPE==NSS_DEFPIN && SPICONF.SIDE==SLAVE){
-        gpio_configure(GPIOA,SPI1_NSS_PIN,INPUT_PUPD);
-    } else if(SPICONF.NSS_TYPE==NSS_GPIO){
-        gpio_configure(GPIOA,SPI1_NSS_PIN,INPUT_PUPD);
+    } else if(nss_type==NSS_GPIO){
+        gpio_set_output(spi_pin.GPIO_PORT,spi_pin.GPIO_PIN,!ENORDI);
+    } else if(nss_type==NSS_SOFT){      //martwy case.
+        selectSlaveSW(ENORDI);
     }
 }
 
-// 21.07.21: JESZCZE REMAPOWANIE.
-void _set_gpio_assign(SPI_CONF spi_conf){
+// 5.08.21: przeniesc do _.h
+void selectSlaveSW(int ENORDI){
+    if(!(SPI->CR1 & (1<<SPI_BITPOS_CR1_SSM) )){
+        SPI->CR1 |= (1<<SPI_BITPOS_CR1_SSM);
+    }
+
+    if(ENORDI){
+        SPI->CR1 |= (1<<SPI_BITPOS_CR1_SSI);
+    } else{
+        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_SSI);
+    }
+}
+
+
+
+// :::::::::::::::: smieci :::::::::::::::::::::::::::::
+
+// void _conf_afio(SPI_CONF CONF);
+// void _set_gpios(SPI_CONF CONF);
+// void _set_gpio_assign(SPICONF);
+// void _switch_bidi(BIDI_DIRECTION direction);    //moze jako public?
+// void _set_advconf(SPI_ADVCONF CONF);
+
+
+// void  _set_advconf(SPI_ADVCONF adv_conf){
+//     ADVCONF=adv_conf;
+
+//     _set_gpios(adv_conf.SPI_NR);
+//     SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_CPOL);    //cpol
+//     SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_CPHA);    //cpha
+//     SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_DFF);   //DFF
+//     SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_LSBF);    //LSBFFIRT =1
+//     SPI->CR1 &=  ~(7<<SPI_BITPOS_CR1_BR);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
+//     SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_SSM);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
+
+//     SPI->CR1 |=  (ADVCONF.CPOL<<SPI_BITPOS_CR1_CPOL);    //cpol
+//     SPI->CR1 |=  (ADVCONF.CPHA<<SPI_BITPOS_CR1_CPHA);    //cpha
+//     SPI->CR1 |=  (ADVCONF.DFF<<SPI_BITPOS_CR1_DFF);   //DFF
+//     SPI->CR1 |=  (ADVCONF.LSBF<<SPI_BITPOS_CR1_LSBF);    //LSBFFIRT =1
+//     SPI->CR1 |=  (ADVCONF.BR<<SPI_BITPOS_CR1_BR);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
     
-    switch(spi_conf.SPI_NR){
-        case SPI_NR1:
-            PIN_NSS.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=4;
-            PIN_CLK.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=5;
-            PIN_MISO.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=6;
-            PIN_MOSI.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=7;
-            break;
-        case SPI_NR2:
-            PIN_NSS.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=12;
-            PIN_CLK.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=13;
-            PIN_MISO.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=14;
-            PIN_MOSI.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=15;
-            break;
-    }
-}
+//     SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_SSM);    //baoud rate TODO 20.03.2021: boud rate to conf (tutaj pclk/32)
+    
+    
+// }
+
+// void configure_spi_adv(SPI_CONF conf, SPI_ADVCONF adv_conf){
+//     //ustawianie defaultow. TODO: 23.02.2021 --> ok
+//     ADVCONF = adv_conf;
+//     configure_spi(conf);
+// }
 
 
-int _get_flag_status(int bit_position){
-    return ((SPI->SR & (1<<bit_position)) >> bit_position);
-}
+
+// //potrzebne wogole?
+// void _select_slave(){
+//     //TODO 22.03.2021: albo przez NSS, albo przez GPIO!
+// }
+
+// void _switch_bidi(BIDI_DIRECTION DIR){
+//     //todo 23.03.2021: spprwdz czy bidi smiga.
+//     if(DIR==RECEIVE){       SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIOE);    }
+//     else if(DIR==TRANSMIT){ SPI->CR1 |=  (1<<SPI_BITPOS_CR1_BIDIOE);    }
+    
+// }
+
+// void _conf_afio(SPI_CONF SPICONF){   
+//     //TODO    
+//     // if(!AFIO_PCLK_GET()) {AFIO_PCLK_EN();}
+    
+//     // if(SPICONF.REMAP==REMAP_DEFAULT){
+//     //     AFIO->MAPR &= ~(1<<0);
+//     // } else if(SPICONF.REMAP==REMAP_REMAPPED){
+//     //     AFIO->MAPR |=  (1<<0);
+//     // }
+// }
+
+// void _set_gpios(ADVCONF adv_conf){
+
+//     _set_gpio_assign(SPI_NR spi_nr);
+    
+
+//     //TODO 25.03.2021 malo to czytelne, nie zagniezdzaj ifow. NSS jest OK
+
+//     if(!GPIOA_PCLK_GET()) {GPIOC_PCLK_EN();}
+
+//     //SCK PIN
+//     if(SPICONF.SIDE==MASTER){ gpio_configure(GPIOA,SCK_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);}
+//     else if(SPICONF.SIDE==SLAVE){ gpio_configure(GPIOA,SCK_PIN,INPUT_FLOATING);}
+
+//     // note: simplex trans i rec, programistycznie wyglada jak full-duplex. tylko fizycznie usuwasz jeden przewod.
+//     // MISO/MOSI pins
+//     if(SPICONF.MODE==FULL_DUPLEX || SPICONF.MODE==SIMPLEX_RECEIVE || SPICONF.MODE==SIMPLEX_TRANSMIT){
+//         if(SPICONF.SIDE==MASTER){
+//             gpio_configure(GPIOA,MISO_PIN,INPUT_PUPD);                 //MISO, INPUT_FLOATING possible
+//             gpio_configure(GPIOA,MOSI_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);  //MOSI
+//         } else if (SPICONF.SIDE==SLAVE){
+//             gpio_configure(GPIOA,MOSI_PIN,INPUT_PUPD);             //MOSI, INPUT_FLOATING also possible           
+//             if(SPICONF.SLAVE_CONN==POINT_TO_POINT){gpio_configure(GPIOA,MISO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ); } //MISO
+//             else if(SPICONF.SLAVE_CONN==MULTISLAVE){gpio_configure(GPIOA,MISO_PIN,OUTPUT_ALT_ODRAIN_10MHZ); }  //MISO
+//         }
+//     } else if(SPICONF.MODE==HALF_DUPLEX){
+//         if(SPICONF.SIDE==MASTER){
+//             gpio_configure(GPIOA,MOSI_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);  //MOSI
+//         } else if (SPICONF.SIDE==SLAVE){
+//             if(SPICONF.SLAVE_CONN==POINT_TO_POINT){gpio_configure(GPIOA,MISO_PIN,OUTPUT_ALT_PUSHPULL_10MHZ); } //MISO
+//             else if(SPICONF.SLAVE_CONN==MULTISLAVE){gpio_configure(GPIOA,MISO_PIN,OUTPUT_ALT_ODRAIN_10MHZ); }  //MISO
+//         }
+//     }
+
+//     //NSS PIN
+//     if(SPICONF.NSS_TYPE==NSS_DEFPIN && SPICONF.SIDE==MASTER ){
+//         gpio_configure(GPIOA,SPI1_NSS_PIN,OUTPUT_ALT_PUSHPULL_10MHZ);
+//     } else if(SPICONF.NSS_TYPE==NSS_DEFPIN && SPICONF.SIDE==SLAVE){
+//         gpio_configure(GPIOA,SPI1_NSS_PIN,INPUT_PUPD);
+//     } else if(SPICONF.NSS_TYPE==NSS_GPIO){
+//         gpio_configure(GPIOA,SPI1_NSS_PIN,INPUT_PUPD);
+//     }
+// }
+
+// // 21.07.21: JESZCZE REMAPOWANIE.
+// void _set_gpio_assign(SPI_CONF spi_conf){
+    
+//     switch(spi_conf.SPI_NR){
+//         case SPI_NR1:
+//             PIN_NSS.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=4;
+//             PIN_CLK.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=5;
+//             PIN_MISO.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=6;
+//             PIN_MOSI.GPIO_PORT=GPIOA;PIN_NSS.GPIO_PIN=7;
+//             break;
+//         case SPI_NR2:
+//             PIN_NSS.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=12;
+//             PIN_CLK.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=13;
+//             PIN_MISO.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=14;
+//             PIN_MOSI.GPIO_PORT=GPIOB;PIN_NSS.GPIO_PIN=15;
+//             break;
+//     }
+// }
+
+
+// int _get_flag_status(int bit_position){
+
+//     return ((SPI->SR & (1<<bit_position)) >> bit_position);
+// }
