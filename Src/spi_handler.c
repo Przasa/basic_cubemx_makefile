@@ -2,6 +2,15 @@
 #include "gpio_handler.h"
 #include "my_stm32f103xx.h"
 
+#include "string.h"
+
+//parkowanie 07.08.21:
+// 1. test prostej komunikacji, masz juz wlasciwie wszystko (jezeli puunkt 2. nie blokuje)
+// 2. funkcje do selelkcji slave'a -> troche juz jest
+// 3. wsparcie dla SPI2
+// 4. interrupy
+// 5. czyszczenie smieci
+// 6. zestaw testow.
 
 //todo 20.03.21:    jakies makro na set i reset bitu?
 //todo 20.03.21:    uzupelnij o remap.
@@ -58,6 +67,8 @@
 
 
 
+SPI_CONF CURRENT_CONF;
+// 07.08.21: przydalaby sie funkcja do selekcji slavow
 void _configureGpioClock(SPI_NR spi_nr, SPI_ACON_REMAP remap);
 void _configureSpiClock(SPI_NR spi_nr);
 void _configureSpiGPIOs(SPI_SIDE side, SPI_MODE mode, SPI_ACON_NSSTYPE nss_type,SPI_ACON_SLAVEQTY slave_qty); //podzielic to jeszcze?
@@ -84,63 +95,23 @@ void _configureSlaveSelect(SPI_SIDE side,SPI_ACON_NSSTYPE nss_type);    //multim
 
 // :::::::::::::::: PUBLIC FUNCTIONS ::::::::::::::::::
 
-// funckje publiczne z pliku.h
-// void configure_spi(SPI_CONF spi_conf);
-// void enable_spi(int ENORDI);
-// void send_data(uint8_t* transmit_buffer, int length);
-// void receive_data(uint8_t* receive_buffer, int length);
-// void selectSlaveHW(int ENORDI,SPI_ACON_NSSTYPE nss_type, SPI_GPIO spi_pin);
-// void selectSlaveSW(int ENORDI);
-
-
-// void configure_spi(SPI_c)
-
-void configure_spi_old(SPI_CONF conf){
-
-    if(!isConfiguredAdvanced(ADVCONF)) _set_advconf(ADVCONF_DEFAULT);
-    
-    configureClock();
-    
-    if(!SPI1_PCLK_GET()){SPI1_PCLK_EN();}
-
-    // 21.07.21: uwazaj: mozesz wysypc sie przy adv_config i remapowaniu. wymysl cos.
-    _set_gpios(conf);
-
-    //todo 25.03.2021: moze to oc ponizej tez wydzielic to jakiejs funkcji?
-
-
-
-    //MASTER/SLAVE
-    SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_MSTR);    
-    SPI->CR1 |=  (conf.SIDE<<SPI_BITPOS_CR1_MSTR);    
-
-    //COMM_MODES
-    switch (conf.MODE)
-    {
-        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIMODE);   
-        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_RXONLY);   
-        SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIOE);   
-
-        case FULL_DUPLEX:
-            break;
-        case HALF_DUPLEX:
-            //w transimicie/receive trzeba ustawiac: SPI->CR1 (&=)/(|=) (~)(1<<SPI_BITPOS_CR1_BIDIOE); 
-            SPI->CR1 |=  (1<<SPI_BITPOS_CR1_BIDIMODE); 
-            break;
-        case SIMPLEX_RECEIVE:
-            SPI->CR1 |=  (1<<SPI_BITPOS_CR1_RXONLY);   
-            break;
-        case SIMPLEX_TRANSMIT:
-            break;
-        default:
-            break;
+uint8_t* quickStart(SPI_SIDE side){
+    if(side==MASTER){
+        char data_transmitted[] ="wysylana ramka."; 
+        configure_spi(SPI_DEFCONF_MASTER);
+        enable_spi(ENABLE);
+        send_data(data_transmitted,strlen(data_transmitted));
+        enable_spi(DISABLE);
+        return data_transmitted;
+    }else{
+        char data_received[16];
+        configure_spi(SPI_DEFCONF_SLAVE);
+        enable_spi(ENABLE);
+        receive_data((uint8_t*)receive_data,16);
+        enable_spi(DISABLE);
+        return data_received;
     }
-
 }
-
-
-
-
 
 void enable_spi(int ENORDI){
     while(_get_flag_status(SPI_BITPOS_SR_BSY));
@@ -152,48 +123,92 @@ void enable_spi(int ENORDI){
     }
 }
 
+void configure_spi(SPI_CONF conf){
+
+    CURRENT_CONF= conf;
+
+    _setSpiPins(conf.SPI_NR, conf.REMAP);
+    _configureGpioClock(conf.SPI_NR, conf.REMAP);
+    _configureSpiClock(conf.SPI_NR);
+    _configureSpiGPIOs(conf.SIDE, conf.MODE , conf.NSS_TYPE ,conf.SLAVE_QTY ); //podzielic to jeszcze?
+    _configureSide(conf.SIDE);
+    _configureFrame(conf.CPHA,conf.CPOL,conf.DFF,conf.LSBF); // podzielic?
+    _configureBR(conf.BR);
+    _configureBidi(conf.MODE);
+    _configureSlaveSelect(conf.SIDE,conf.NSS_TYPE);    //multimaster sobie darujemy
+}
+
+
+
+
+// master: 
+//     send: SPI_DR
+//     receive: SPE=1
+// slave:
+//     send: received CLK, 1st bit on MISO,
+//     recive: received CLK, 1st bit on MOSI
+
+// row function
+// void send_data(uint8_t* TxBuffer, uint8_t len){
+//     SPI->CR1 
+    
+// }
+
+
 //moze moglibysmy uzyc referencji zamiast wskaznika ?
 void send_data(uint8_t* transmit_buffer, int length){
 
-    while(_get_flag_status(SPI_BITPOS_SR_TXE)!=1);
-    while(length>0){
-        if(ADVCONF.DFF==DFF_8){
-            SPI->DR = *transmit_buffer;
-            length--;
-            transmit_buffer++;
-        } else if(ADVCONF.DFF==DFF_16){
-            SPI->DR = *((uint16_t*)transmit_buffer);
-            length--;length--;
-            (uint16_t*)transmit_buffer++;
+    SPI_MODE mode = CURRENT_CONF.MODE;
+    SPI_ACON_DFF dff = CURRENT_CONF.DFF;
+
+    if(mode==HALF_DUPLEX)    {          SPI->CR1 |= (1<< SPI_BITPOS_CR1_BIDIOE);}
+
+    if(mode==FULL_DUPLEX || mode==HALF_DUPLEX || mode==SIMPLEX_TRANSMIT){
+
+        while(_get_flag_status(SPI_BITPOS_SR_TXE)!=1);
+        
+        while(length>0){
+            if(dff==DFF_8){
+                SPI->DR = *transmit_buffer;
+                length--;
+                transmit_buffer++;
+            } else if(dff==DFF_16){
+                SPI->DR = *((uint16_t*)transmit_buffer);
+                length--;length--;
+                (uint16_t*)transmit_buffer++;
+            }
         }
+
     }
 
-// void sendByte(uint8_t byte){
-//     //BSY FLAG?
-//     while((SPI->SR & (1 << SPI_BITPOS_SR_TXE))!=0){};
-//     SPI->DR |= byte;
+    if(mode==HALF_DUPLEX)    {          SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);}
 
 
-// }
-// int receiveByte(){
-//     while((SPI->SR & (1 << SPI_BITPOS_SR_RXNE))!=0){};
-//     return (SPI->DR & 255);
-// }
-};
+
+}
 
 void receive_data(uint8_t* receive_buffer, int length){
 
-    while(_get_flag_status(SPI_BITPOS_SR_RXNE)!=1);
+    SPI_MODE mode = CURRENT_CONF.MODE;
+    SPI_ACON_DFF dff = CURRENT_CONF.DFF;
 
-    while(length>0){
-        if(ADVCONF.DFF==DFF_8){
-            *receive_buffer=SPI->DR;
-            length--;
-            receive_buffer++;
-        } else if(ADVCONF.DFF==DFF_16){
-            *((uint16_t*)receive_buffer) = SPI->DR;
-            length--;length--;
-            (uint16_t*)receive_buffer++;
+
+    if(mode==HALF_DUPLEX)    {          SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);}
+
+    if(mode==FULL_DUPLEX || mode==HALF_DUPLEX || mode==SIMPLEX_RECEIVE){
+    
+        while(_get_flag_status(SPI_BITPOS_SR_RXNE)!=1);
+
+        while(length>0){
+            if(dff==DFF_8){
+                *receive_buffer=SPI->DR;
+                length--;
+                receive_buffer++;
+            } else if(dff==DFF_16){
+                *((uint16_t*)receive_buffer) = SPI->DR;
+                length--;length--;
+                (uint16_t*)receive_buffer++;
+            }
         }
     }
 
@@ -432,7 +447,6 @@ void _configureBidi(SPI_MODE mode){
         SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_BIDIOE);
         SPI->CR1 &= ~(1<< SPI_BITPOS_CR1_RXONLY);
     }
-    
 }
 
 // 5.08.21: przeniesc do _.h
@@ -465,6 +479,49 @@ void selectSlaveSW(int ENORDI){
 
 
 // :::::::::::::::: smieci :::::::::::::::::::::::::::::
+
+// void configure_spi_old(SPI_CONF conf){
+
+//     if(!isConfiguredAdvanced(ADVCONF)) _set_advconf(ADVCONF_DEFAULT);
+    
+//     configureClock();
+    
+//     if(!SPI1_PCLK_GET()){SPI1_PCLK_EN();}
+
+//     // 21.07.21: uwazaj: mozesz wysypc sie przy adv_config i remapowaniu. wymysl cos.
+//     _set_gpios(conf);
+
+//     //todo 25.03.2021: moze to oc ponizej tez wydzielic to jakiejs funkcji?
+
+
+
+//     //MASTER/SLAVE
+//     SPI->CR1 &=  ~(1<<SPI_BITPOS_CR1_MSTR);    
+//     SPI->CR1 |=  (conf.SIDE<<SPI_BITPOS_CR1_MSTR);    
+
+//     //COMM_MODES
+//     switch (conf.MODE)
+//     {
+//         SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIMODE);   
+//         SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_RXONLY);   
+//         SPI->CR1 &= ~(1<<SPI_BITPOS_CR1_BIDIOE);   
+
+//         case FULL_DUPLEX:
+//             break;
+//         case HALF_DUPLEX:
+//             //w transimicie/receive trzeba ustawiac: SPI->CR1 (&=)/(|=) (~)(1<<SPI_BITPOS_CR1_BIDIOE); 
+//             SPI->CR1 |=  (1<<SPI_BITPOS_CR1_BIDIMODE); 
+//             break;
+//         case SIMPLEX_RECEIVE:
+//             SPI->CR1 |=  (1<<SPI_BITPOS_CR1_RXONLY);   
+//             break;
+//         case SIMPLEX_TRANSMIT:
+//             break;
+//         default:
+//             break;
+//     }
+
+// }
 
 // void _conf_afio(SPI_CONF CONF);
 // void _set_gpios(SPI_CONF CONF);

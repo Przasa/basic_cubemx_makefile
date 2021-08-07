@@ -144,6 +144,7 @@ typedef struct{
 
 
 //:::::::::::::::::::::::::PUBLIC METHODS:::::::::::::::::::::::::::::::::::::
+uint8_t* quickStart(SPI_SIDE side);
 void configure_spi(SPI_CONF spi_conf);
 void enable_spi(int ENORDI);
 void send_data(uint8_t* transmit_buffer, int length);
